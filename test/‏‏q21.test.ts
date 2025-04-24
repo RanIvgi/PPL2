@@ -14,12 +14,20 @@ describe('Q21 Tests', () => {
         expect(evalP(`(L31 (get (dict '((a . 1) (b . 2))) 'a))`)).to.deep.equal(makeOk(1));
     });
 
+    it("Q21 Ran's test 1", () => {
+        expect(evalP(`(L31 (get (dict '((a . 1) (b . 2) (c . 3))) 'a))`)).to.deep.equal(makeOk(1));
+    });
+
     it("Q21 test 2", () => {
         expect(evalP(`(L31 (get (dict '((a . 1) (b . 2))) 'c))`)).is.satisfy(isFailure);
     });
 
     it("Q21 test 3", () => {
         expect(evalP(`(L31 (dict? (dict '((a . 1) (b . 2)))))`)).to.deep.equal(makeOk(true));
+    });
+
+    it("Q21 Ran's test 2", () => {
+        expect(evalP(`(L31 (dict? (dict '((a . 1) (b . 2) (c . 3)))))`)).to.deep.equal(makeOk(true));
     });
 
     it("Q21 test 4", () => {

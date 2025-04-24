@@ -101,7 +101,7 @@ const isPairPrim = (v: Value): boolean =>
 
 // ------------------------------------------------------------------
 const dictPrim = (v: Value): CompoundSExp =>
-    makeCompoundSExp(v, makeEmptySExp());
+    isCompoundSExp(v) ? v : makeCompoundSExp(v, makeEmptySExp());
 /*
 const getPrim = (dict: Value, key: Value): Result<Value> =>
     isCompoundSExp(dict) && isSymbolSExp(key)
