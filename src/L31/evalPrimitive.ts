@@ -32,6 +32,7 @@ export const applyPrimitive = (proc: PrimOp, args: Value[]): Result<Value> =>
                                                                             proc.op === "boolean?" ? makeOk(typeof (args[0]) === 'boolean') :
                                                                                 proc.op === "symbol?" ? makeOk(isSymbolSExp(args[0])) :
                                                                                     proc.op === "string?" ? makeOk(isString(args[0])) :
+                                                                                        // dict functions
                                                                                         proc.op === "dict" ? makeOk(dictPrim(args[0])) :
                                                                                             proc.op === "get" ? getInDict(args[0], args[1]) :
                                                                                                 proc.op === "dict?" ? makeOk(isDictPrim(args[0])) :
@@ -100,10 +101,20 @@ const isPairPrim = (v: Value): boolean =>
     isCompoundSExp(v);
 
 // ------------------------------------------------------------------
+// Dictionary primitives
+// ------------------------------------------------------------------
+
+// Create a dictionary from a list of pairs (key-value pairs)
 const dictPrim = (v: Value): CompoundSExp =>
     isCompoundSExp(v) ? v : makeCompoundSExp(v, makeEmptySExp());
 
 
+/**
+ * Get the value associated with a key in a dictionary.
+ * @param dict the dictionary to search in
+ * @param key the key to look for
+ * @returns Result<Value>
+ */
 const getInDict = (dict: Value, key: Value): Result<Value> =>
     isCompoundSExp(dict) && isSymbolSExp(key)
         ? findInDict(dict, key)
@@ -111,9 +122,14 @@ const getInDict = (dict: Value, key: Value): Result<Value> =>
             `Error in get: Expected a dictionary and a symbol key.`
         );
 
-
+/**
+ * helper function to find a key in a dictionary.
+ * @param dict the dictionary to search in
+ * @param key the key to look for
+ * @returns Result<Value>
+ */
 const findInDict = (dict: CompoundSExp, key: SymbolSExp): Result<Value> =>
-    isEmptySExp(dict.val2)
+    isEmptySExp(dict.val1)
         ? makeFailure(`get: Key not found in dictionary: ${format(key)}`)
         : isCompoundSExp(dict.val1) &&
             isSymbolSExp(dict.val1.val1) &&
@@ -123,10 +139,19 @@ const findInDict = (dict: CompoundSExp, key: SymbolSExp): Result<Value> =>
                 ? findInDict(dict.val2, key)
                 : makeFailure(`get: Key not found in dictionary: ${format(key)}`);
 
+/**
+ *  Check if the value is a dictionary.
+ * @param v the value to check
+ * @returns boolean
+ */
 const isDictPrim = (v: Value): boolean =>
     isCompoundSExp(v) && validateDict(v);
 
-// Validate the dictionary structure
+/**
+ * helper function to check if the dictionary is valid.
+ * @param dict the dictionary to check
+ * @returns boolean
+ */
 const validateDict = (dict: CompoundSExp): boolean =>
     isEmptySExp(dict.val2)
         ? isValidPair(dict.val1)
@@ -134,6 +159,10 @@ const validateDict = (dict: CompoundSExp): boolean =>
         isCompoundSExp(dict.val2) &&
         validateDict(dict.val2);
 
-// Check if the pair is valid (i.e., a symbol and a value)
+/**
+ * Check if the pair is valid (key-value pair).
+ * @param pair the pair to check
+ * @returns boolean
+ * */
 const isValidPair = (pair: Value): boolean =>
     isCompoundSExp(pair) && isSymbolSExp(pair.val1);
