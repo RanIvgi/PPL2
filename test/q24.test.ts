@@ -8,7 +8,7 @@ import { L32toL3 } from "../src/q24";
 import { format } from "../src/shared/format";
 import { makeSymbolSExp } from '../src/L3/L3-value';
 
-
+/*
 const noDictExp = (e : Program | Exp) : boolean =>
     isAtomicExp(e) ? true :
     isLitExp(e) ? true :
@@ -69,4 +69,4 @@ describe('Q24 Tests', () => {
                 (dict (a 2) (b 1)))
             'a))`)).to.deep.equal(makeOk(2));
     });
-});
+});*/

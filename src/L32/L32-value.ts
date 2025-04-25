@@ -3,7 +3,7 @@
 
 import { isPrimOp, CExp, PrimOp, VarDecl } from './L32-ast';
 import { isNumber, isArray, isString } from '../shared/type-predicates';
-import { append } from 'ramda';
+import { append, is } from 'ramda';
 
 export type Value = SExpValue;
 
@@ -36,7 +36,22 @@ export type SymbolSExp = {
     val: string;
 }
 
-export type SExpValue = number | boolean | string | PrimOp | Closure | SymbolSExp | EmptySExp | CompoundSExp;
+// DictValue is a dictionary with string keys and values of any type
+export type DictValue = {
+    tag: "DictValue";
+    map: ReadonlyMap<string, Value>;
+  };
+
+export const makeDictValue = (pairs: Array<[string, Value]>): DictValue => {
+    // Creates a new ReadonlyMap without mutating input
+    const mapValue = pairs.reduce((acc, [k, v]) => {
+      acc.set(k, v);
+      return acc;
+    }, new Map<string, Value>());
+    return { tag: "DictValue", map: mapValue };
+  };
+
+export type SExpValue = number | boolean | string | PrimOp | Closure | SymbolSExp | EmptySExp | CompoundSExp |  DictValue;
 export const isSExp = (x: any): x is SExpValue =>
     typeof(x) === 'string' || typeof(x) === 'boolean' || typeof(x) === 'number' ||
     isSymbolSExp(x) || isCompoundSExp(x) || isEmptySExp(x) || isPrimOp(x) || isClosure(x);
@@ -51,6 +66,7 @@ export const isEmptySExp = (x: any): x is EmptySExp => x.tag === "EmptySExp";
 export const makeSymbolSExp = (val: string): SymbolSExp =>
     ({tag: "SymbolSExp", val: val});
 export const isSymbolSExp = (x: any): x is SymbolSExp => x.tag === "SymbolSExp";
+export const isDictValue = (x: any): x is DictValue => x.tag === "DictValue";
 
 // LitSExp are equivalent to JSON - they can be parsed and read as literal values
 // like SExp except that non functional values (PrimOp and Closures) can be embedded at any level.
@@ -80,4 +96,5 @@ export const valueToString = (val: Value): string =>
     isSymbolSExp(val) ? val.val :
     isEmptySExp(val) ? "'()" :
     isCompoundSExp(val) ? compoundSExpToString(val) :
+    isDictValue(val) ? `Dict(${Array.from(val.map.entries()).map(([k, v]) => `${k}: ${valueToString(v)}`).join(', ')})` :
     val;

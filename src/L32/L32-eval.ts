@@ -1,14 +1,14 @@
 // L32-eval.ts
 import { map } from "ramda";
-import { isCExp, isLetExp } from "./L32-ast";
-import { BoolExp, CExp, Exp, IfExp, LitExp, NumExp,
-         PrimOp, ProcExp, Program, StrExp, VarDecl } from "./L32-ast";
+import { isCExp, isDictExp, isLetExp } from "./L32-ast";
+import { BoolExp, CExp, DictExp, Exp, IfExp, LitExp, NumExp,
+         PrimOp, ProcExp, Program, StrExp, VarDecl, DictEntry } from "./L32-ast";
 import { isAppExp, isBoolExp, isDefineExp, isIfExp, isLitExp, isNumExp,
              isPrimOp, isProcExp, isStrExp, isVarRef } from "./L32-ast";
-import { makeBoolExp, makeLitExp, makeNumExp, makeProcExp, makeStrExp } from "./L32-ast";
+import { makeBoolExp, makeLitExp, makeNumExp, makeProcExp, makeStrExp, makeDictExp } from "./L32-ast";
 import { parseL32Exp } from "./L32-ast";
 import { applyEnv, makeEmptyEnv, makeEnv, Env } from "./L32-env";
-import { isClosure, makeClosure, Closure, Value } from "./L32-value";
+import { isClosure, makeClosure, Closure, Value, CompoundSExp, EmptySExp, SymbolSExp, SExpValue, isSymbolSExp, makeDictValue } from "./L32-value";
 import { first, rest, isEmpty, List, isNonEmptyList } from '../shared/list';
 import { isBoolean, isNumber, isString } from "../shared/type-predicates";
 import { Result, makeOk, makeFailure, bind, mapResult, mapv } from "../shared/result";
@@ -34,7 +34,34 @@ const L32applicativeEval = (exp: CExp, env: Env): Result<Value> =>
                         bind(mapResult(param => L32applicativeEval(param, env), exp.rands), (rands: Value[]) =>
                             L32applyProcedure(rator, rands, env))) :
     isLetExp(exp) ? makeFailure('"let" not supported (yet)') :
+    // TODO: add support for "dict" expression
+    isDictExp(exp) ? evalDictExp(exp, env) :
     exp;
+
+/**
+ * Evaluates a dictionary expression by applying the environment to each of its entries.
+ * Each entry is a key-value EntryDict, where the key is a Symbol and the value is a CExp.
+ * @param exp an DictExp
+ * @param env the environment to use for evaluation
+ * @returns a Result containing the evaluated dictionary value
+ *          or an error message if the evaluation fails.
+ */
+const evalDictExp = (exp: DictExp, env: Env): Result<Value> =>
+    // Evaluate each entry in the dictionary
+    bind(
+        mapResult((entry: DictEntry): Result<[string, Value]> =>
+            // Ensure the key is a symbol and evaluate the value
+            bind(L32applicativeEval(entry.val, env), (val: Value) =>
+                isSymbolSExp(entry.key)
+                    ? makeOk([entry.key.val, val])
+                    : makeFailure(`Key ${entry.key} is not a symbol`)
+            ),
+            exp.entries
+        ),
+        // Convert the evaluated entries into a DictValue
+        (evaluatedEntries: Array<[string, Value]>) =>
+            makeOk(makeDictValue(evaluatedEntries))
+    );
 
 export const isTrueValue = (x: Value): boolean =>
     ! (x === false);
@@ -50,7 +77,24 @@ const evalProc = (exp: ProcExp, env: Env): Result<Closure> =>
 const L32applyProcedure = (proc: Value, args: Value[], env: Env): Result<Value> =>
     isPrimOp(proc) ? applyPrimitive(proc, args) :
     isClosure(proc) ? applyClosure(proc, args, env) :
+    isDictExp(proc) ? applyDict(proc, args, env) :
     makeFailure(`Bad procedure ${format(proc)}`);
+
+/**
+ * Apply a dictionary to a key and return the associated value.
+ * If the key is not found, return an error message.
+ * @param proc an DictExp
+ * @param args an argument to apply to the dict, find is value
+ * @param env the environment to use for evaluation
+ * @returns a Result containing the value associated with the key in the dict, or an error message
+ *          if the key is not found or if the argument is not a string.
+ */
+const applyDict = (proc: DictExp, args: Value[], env: Env): Result<Value> =>
+    args.length !== 1 ? makeFailure("Dicts only take one argument") :
+    isString(args[0]) ?
+        bind(makeOk(proc.entries.find(({ key }) => key === args[0])), (entry) =>
+            entry ? L32applicativeEval(entry.val, env) : makeFailure(`Key ${args[0]} not found`)) :
+    makeFailure("Dicts only take string arguments");
 
 // Applications are computed by substituting computed
 // values into the body of the closure.
@@ -100,3 +144,4 @@ export const evalParse = (s: string): Result<Value> =>
     bind(p(s), (sexp: Sexp) => 
         bind(parseL32Exp(sexp), (exp: Exp) =>
             evalSequence([exp], makeEmptyEnv())));
+
