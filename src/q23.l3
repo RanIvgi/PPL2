@@ -22,10 +22,11 @@
   (lambda (x)
     (if (and (pair? x)
              (forall (lambda (p)
-                       (pair? p))
+                       (and (pair? p)
+                            (symbol? (car p))))
                      x))
         #t
-        #f)))
+        #f)))
 
 
 (define make-error

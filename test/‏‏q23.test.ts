@@ -16,11 +16,7 @@ const evalP = (x: string): Result<Value> =>
 describe('Q23 Tests', () => {
     
    it("Q23 test 1", () => {
-        expect(evalP(`(L3 ` + q23 + ` (get (dict '((a . 1) (b . 2))) 'b)))`)).to.deep.equal(makeOk(2));
-    });
-
-    it("Q23 Ran's test 1", () => {
-        expect(evalP(`(L3 ` + q23 + ` (dict '((a . 1) (b . 2)))`)).to.deep.equal("((a . 1) (b . 2))");
+        expect(evalP(`(L3 ` + q23 + ` (get (dict '((a . 1) (b . 2))) 'b))`)).to.deep.equal(makeOk(2));
     });
 
     it("Q23 test 2", () => {
