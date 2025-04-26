@@ -31,4 +31,64 @@ describe('Q22 Tests', () => {
                 (dict (a 2) (b 1)))
             'a))`)).to.deep.equal(makeOk(2));
     });
+
+    // Additional tests for nested dictionaries and other edge cases
+    it("Q22 Extra test 4: Nested dictionaries", () => {
+        expect(evalP(`(L32 
+            (define d (dict (a (dict (x 10) (y 20))) (b 2)))
+            ((d 'a) 'x))`)).to.deep.equal(makeOk(10));
+    });
+
+    it("Q22 Extra test 5: Dictionary with expressions as values", () => {
+        expect(evalP(`(L32 
+            (define d (dict (a (+ 1 2)) (b (* 3 4))))
+            (d 'a))`)).to.deep.equal(makeOk(3));
+    });
+
+    it("Q22 Extra test 6: Invalid dictionary entry (non-string key)", () => {
+        expect(evalP(`(L32 
+            (dict (1 2) (b 3)))`)).to.satisfy(isFailure);
+    });
+
+    it("Q22 Extra test 7: Dictionary application with invalid key type", () => {
+        expect(evalP(`(L32 
+            (define d (dict (a 1) (b 2)))
+            (d 123))`)).to.satisfy(isFailure);
+    });
+
+    it("Q22 Extra test 8: Empty dictionary", () => {
+        expect(evalP(`(L32 
+            (define d (dict))
+            (d 'a))`)).to.satisfy(isFailure);
+    });
+
+    it("Q22 Extra test 9: Dictionary with duplicate keys", () => {
+        expect(evalP(`(L32 
+            (dict (a 1) (a 2)))`)).to.satisfy(isFailure);
+    });
+
+    it("Q22 Extra test 10: Dictionary with conditional keys", () => {
+        expect(evalP(`(L32 
+            (define x #t)
+            (
+            (if x
+                (dict (a 42))
+                (dict (b 42))
+            )
+            'a))`)).to.deep.equal(makeOk(42));
+    });
+
+    it("Q22 Extra test 11: Dictionary with nested expressions as keys", () => {
+        expect(evalP(`(L32 
+            ((dict ((+ 1 1) 42)) 2))`)).to.deep.equal(makeOk(42));
+    });
+
+    it("Q22 Extra test 12: Literal dictionary values", () => {
+        expect(evalP(`(L32 
+            (define d (dict (a "hello") (b #t)))
+            (d 'a))`)).to.deep.equal(makeOk("hello"));
+        expect(evalP(`(L32 
+            (define d (dict (a "hello") (b #t)))
+            (d 'b))`)).to.deep.equal(makeOk(true));
+    });
 });

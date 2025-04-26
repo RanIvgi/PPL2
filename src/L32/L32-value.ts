@@ -5,7 +5,7 @@ import { isPrimOp, CExp, PrimOp, VarDecl } from './L32-ast';
 import { isNumber, isArray, isString } from '../shared/type-predicates';
 import { append } from 'ramda';
 
-export type Value = SExpValue;
+export type Value = SExpValue | DictValue;
 
 export type Functional = PrimOp | Closure;
 export const isFunctional = (x: any): x is Functional => isPrimOp(x) || isClosure(x);
@@ -18,7 +18,7 @@ export type Closure = {
     body: CExp[];
 }
 export const makeClosure = (params: VarDecl[], body: CExp[]): Closure =>
-    ({tag: "Closure", params: params, body: body});
+    ({ tag: "Closure", params: params, body: body });
 export const isClosure = (x: any): x is Closure => x.tag === "Closure";
 
 // ========================================================
@@ -37,19 +37,35 @@ export type SymbolSExp = {
 }
 
 export type SExpValue = number | boolean | string | PrimOp | Closure | SymbolSExp | EmptySExp | CompoundSExp;
+// new DictValue type
+export type DictValue = {
+    tag: "DictValue";
+    entries: DictEntryValue[];
+}
+// DictValue type
+export type DictEntryValue = {
+    key: Value;
+    value: Value;
+}
 export const isSExp = (x: any): x is SExpValue =>
-    typeof(x) === 'string' || typeof(x) === 'boolean' || typeof(x) === 'number' ||
-    isSymbolSExp(x) || isCompoundSExp(x) || isEmptySExp(x) || isPrimOp(x) || isClosure(x);
+    typeof (x) === 'string' || typeof (x) === 'boolean' || typeof (x) === 'number' ||
+    isSymbolSExp(x) || isCompoundSExp(x) || isEmptySExp(x) || isPrimOp(x) ||
+    isClosure(x) || isDictValue(x);
 
 export const makeCompoundSExp = (val1: SExpValue, val2: SExpValue): CompoundSExp =>
-    ({tag: "CompoundSexp", val1: val1, val2 : val2});
+    ({ tag: "CompoundSexp", val1: val1, val2: val2 });
 export const isCompoundSExp = (x: any): x is CompoundSExp => x.tag === "CompoundSexp";
 
-export const makeEmptySExp = (): EmptySExp => ({tag: "EmptySExp"});
+export const makeEmptySExp = (): EmptySExp => ({ tag: "EmptySExp" });
 export const isEmptySExp = (x: any): x is EmptySExp => x.tag === "EmptySExp";
 
 export const makeSymbolSExp = (val: string): SymbolSExp =>
-    ({tag: "SymbolSExp", val: val});
+    ({ tag: "SymbolSExp", val: val });
+// DictValue constructors
+export const makeDictValue = (entries: DictEntryValue[]): DictValue =>
+    ({tag: "DictValue", entries: entries});
+//  DictValue predicate
+export const isDictValue = (x: any): x is DictValue => x.tag === "DictValue";
 export const isSymbolSExp = (x: any): x is SymbolSExp => x.tag === "SymbolSExp";
 
 // LitSExp are equivalent to JSON - they can be parsed and read as literal values
@@ -63,21 +79,22 @@ export const closureToString = (c: Closure): string =>
 
 export const compoundSExpToArray = (cs: CompoundSExp, res: string[]): string[] | { s1: string[], s2: string } =>
     isEmptySExp(cs.val2) ? append(valueToString(cs.val1), res) :
-    isCompoundSExp(cs.val2) ? compoundSExpToArray(cs.val2, append(valueToString(cs.val1), res)) :
-    ({ s1: append(valueToString(cs.val1), res), s2: valueToString(cs.val2)})
- 
-export const compoundSExpToString = (cs: CompoundSExp, css = compoundSExpToArray(cs, [])): string => 
+        isCompoundSExp(cs.val2) ? compoundSExpToArray(cs.val2, append(valueToString(cs.val1), res)) :
+            ({ s1: append(valueToString(cs.val1), res), s2: valueToString(cs.val2) })
+
+export const compoundSExpToString = (cs: CompoundSExp, css = compoundSExpToArray(cs, [])): string =>
     isArray(css) ? `(${css.join(' ')})` :
-    `(${css.s1.join(' ')} . ${css.s2})`
+        `(${css.s1.join(' ')} . ${css.s2})`
 
 export const valueToString = (val: Value): string =>
-    isNumber(val) ?  val.toString() :
-    val === true ? '#t' :
-    val === false ? '#f' :
-    isString(val) ? `"${val}"` :
-    isClosure(val) ? closureToString(val) :
-    isPrimOp(val) ? val.op :
-    isSymbolSExp(val) ? val.val :
-    isEmptySExp(val) ? "'()" :
-    isCompoundSExp(val) ? compoundSExpToString(val) :
-    val;
+    isNumber(val) ? val.toString() :
+        val === true ? '#t' :
+            val === false ? '#f' :
+                isString(val) ? `"${val}"` :
+                    isClosure(val) ? closureToString(val) :
+                        isPrimOp(val) ? val.op :
+                            isSymbolSExp(val) ? val.val :
+                                isEmptySExp(val) ? "'()" :
+                                    isCompoundSExp(val) ? compoundSExpToString(val) :
+                                    isDictValue(val) ? `{${val.entries.map(e => `${valueToString(e.key)}: ${valueToString(e.value)}`).join(', ')}}` :
+                                            val;

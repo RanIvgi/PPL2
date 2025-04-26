@@ -1,6 +1,6 @@
 import { reduce } from "ramda";
 import { PrimOp } from "./L32-ast";
-import { isCompoundSExp, isEmptySExp, isSymbolSExp, makeCompoundSExp, makeEmptySExp, CompoundSExp, EmptySExp, Value } from "./L32-value";
+import { isCompoundSExp, isEmptySExp, isSymbolSExp, makeCompoundSExp, makeEmptySExp, CompoundSExp, EmptySExp, Value, SExpValue } from "./L32-value";
 import { List, allT, first, isNonEmptyList, rest } from '../shared/list';
 import { isBoolean, isNumber, isString } from "../shared/type-predicates";
 import { Result, makeOk, makeFailure } from "../shared/result";
@@ -23,7 +23,7 @@ export const applyPrimitive = (proc: PrimOp, args: Value[]): Result<Value> =>
                                                                   makeFailure(`Arguments to "or" not booleans: ${format(args)}`) :
     proc.op === "eq?" ? makeOk(eqPrim(args)) :
     proc.op === "string=?" ? makeOk(args[0] === args[1]) :
-    proc.op === "cons" ? makeOk(consPrim(args[0], args[1])) :
+    proc.op === "cons" ? consPrim(args[0], args[1]) :
     proc.op === "car" ? carPrim(args[0]) :
     proc.op === "cdr" ? cdrPrim(args[0]) :
     proc.op === "list" ? makeOk(listPrim(args)) :
@@ -86,12 +86,25 @@ const cdrPrim = (v: Value): Result<Value> =>
     isCompoundSExp(v) ? makeOk(v.val2) :
     makeFailure(`Cdr: param is not compound ${format(v)}`);
 
-const consPrim = (v1: Value, v2: Value): CompoundSExp =>
-    makeCompoundSExp(v1, v2);
+    const consPrim = (v1: Value, v2: Value): Result<CompoundSExp> => {
+        if (!isSExpValue(v1) || !isSExpValue(v2)) {
+            return makeFailure("cons arguments must be S-expressions");
+        }
+        return makeOk(makeCompoundSExp(v1, v2));
+    };
 
 export const listPrim = (vals: List<Value>): EmptySExp | CompoundSExp =>
-    isNonEmptyList<Value>(vals) ? makeCompoundSExp(first(vals), listPrim(rest(vals))) :
+    isNonEmptyList<Value>(vals) && isSExpValue(first(vals)) ? makeCompoundSExp(first(vals) as SExpValue, listPrim(rest(vals))) :
     makeEmptySExp();
 
 const isPairPrim = (v: Value): boolean =>
     isCompoundSExp(v);
+
+// Checks if a value is a valid S-expression value.
+const isSExpValue = (x: Value): x is SExpValue =>
+    typeof x === 'number' ||
+    typeof x === 'boolean' ||
+    typeof x === 'string' ||
+    isSymbolSExp(x) ||
+    isEmptySExp(x) ||
+    isCompoundSExp(x);
