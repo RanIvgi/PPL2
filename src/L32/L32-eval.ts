@@ -2,10 +2,10 @@
 import { map } from "ramda";
 import { isCExp, isLetExp } from "./L32-ast";
 import { BoolExp, CExp, Exp, IfExp, LitExp, NumExp,
-         PrimOp, ProcExp, Program, StrExp, VarDecl, DictExp, DictLitExp, DictEntry} from "./L32-ast";
+         PrimOp, ProcExp, Program, StrExp, VarDecl, DictExp, DictEntry} from "./L32-ast";
 import { isAppExp, isBoolExp, isDefineExp, isIfExp, isLitExp, isNumExp,
-             isPrimOp, isProcExp, isStrExp, isVarRef ,isDictExp, Binding, isDictLitExp } from "./L32-ast";
-import { makeBoolExp, makeLitExp, makeNumExp, makeProcExp, makeStrExp ,makeDictLitExp} from "./L32-ast";
+             isPrimOp, isProcExp, isStrExp, isVarRef ,isDictExp, Binding } from "./L32-ast";
+import { makeBoolExp, makeLitExp, makeNumExp, makeProcExp, makeStrExp } from "./L32-ast";
 import { parseL32Exp } from "./L32-ast";
 import { applyEnv, makeEmptyEnv, makeEnv, Env } from "./L32-env";
 import { isClosure, makeClosure, Closure, Value,DictValue , makeDictValue,isDictValue,isSymbolSExp,DictEntryValue,isCompoundSExp,makeSymbolSExp} from "./L32-value";
@@ -35,7 +35,7 @@ const L32applicativeEval = (exp: CExp, env: Env): Result<Value> =>
                             L32applyProcedure(rator, rands, env))) :
     isLetExp(exp) ? makeFailure('"let" not supported (yet)') :
     isDictExp(exp) ? evalDict(exp, env) :
-    isDictLitExp(exp) ? evalDictLit(exp, env) :
+    // isDictLitExp(exp) ? evalDictLit(exp, env) :
     exp;
 
     /**
@@ -53,15 +53,15 @@ const L32applicativeEval = (exp: CExp, env: Env): Result<Value> =>
      * 
      * Finally, it aggregates all evaluated entries into a dictionary value.
      */
-    const evalDictLit = (exp: DictLitExp, env: Env): Result<Value> => {
-        const evalEntry = (entry: DictEntry): Result<DictEntryValue> =>
-            bind(L32applicativeEval(makeLitExp(entry.key), env), (key: Value) =>
-            bind(L32applicativeEval(entry.value, env), (value: Value) =>
-            makeOk({key, value})));
+    // const evalDictLit = (exp: DictLitExp, env: Env): Result<Value> => {
+    //     const evalEntry = (entry: DictEntry): Result<DictEntryValue> =>
+    //         bind(L32applicativeEval(makeLitExp(entry.key), env), (key: Value) =>
+    //         bind(L32applicativeEval(entry.value, env), (value: Value) =>
+    //         makeOk({key, value})));
     
-        return bind(mapResult(evalEntry, exp.entries), (entries: DictEntryValue[]) =>
-            makeOk(makeDictValue(entries)));
-    }
+    //     return bind(mapResult(evalEntry, exp.entries), (entries: DictEntryValue[]) =>
+    //         makeOk(makeDictValue(entries)));
+    // }
 
    
     /**
@@ -80,14 +80,14 @@ const L32applicativeEval = (exp: CExp, env: Env): Result<Value> =>
      * Finally, it combines all evaluated bindings into a `DictValue` object.
      */
     const evalDict = (exp: DictExp, env: Env): Result<Value> => {
-        const evalBinding = (binding: Binding): Result<DictEntryValue> =>
-            bind(L32applicativeEval(binding.val, env), (value: Value) =>
+        const evalEntry = (entry: DictEntry): Result<DictEntryValue> =>
+            bind(L32applicativeEval(entry.value, env), (value: Value) =>
                 makeOk({
-                    key: makeSymbolSExp(binding.var.var), // Convert var name to symbol
+                    key: entry.key, // Use key directly as a string
                     value
                 }));
     
-        return bind(mapResult(evalBinding, exp.entries), (entries: DictEntryValue[]) =>
+        return bind(mapResult(evalEntry, exp.entries), (entries: DictEntryValue[]) =>
             makeOk(makeDictValue(entries)));
     }
 
@@ -148,14 +148,14 @@ const deepEquals = (a: Value, b: Value): boolean =>
 // values into the body of the closure.
 // To make the types fit - computed values of params must be
 // turned back in Literal Expressions that eval to the computed value.
-const valueToLitExp = (v: Value): NumExp | BoolExp | StrExp | LitExp | PrimOp | ProcExp | DictLitExp =>
+const valueToLitExp = (v: Value): NumExp | BoolExp | StrExp | LitExp | PrimOp | ProcExp  =>
     isNumber(v) ? makeNumExp(v) :
     isBoolean(v) ? makeBoolExp(v) :
     isString(v) ? makeStrExp(v) :
     isPrimOp(v) ? v :
     isClosure(v) ? makeProcExp(v.params, v.body) :
-    // check if isDictValue and convert to DictLitExp 
-    isDictValue(v) ? makeDictLitExp(v.entries.map(entry => ({ key: makeSymbolSExp(format(entry.key)), value: valueToLitExp(entry.value) }))) :
+    // check if isDictValue and convert to a compatible SExpValue
+    isDictValue(v) ? makeLitExp(makeSymbolSExp(printDict(v))) :
     makeLitExp(v);
 
 const applyClosure = (proc: Closure, args: Value[], env: Env): Result<Value> => {

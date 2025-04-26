@@ -47,7 +47,7 @@ import { Sexp, Token } from "s-expression";
 
 export type Exp = DefineExp | CExp;
 export type AtomicExp = NumExp | BoolExp | StrExp | PrimOp | VarRef;
-export type CompoundExp = AppExp | IfExp | ProcExp | LetExp | LitExp | DictExp | DictLitExp;
+export type CompoundExp = AppExp | IfExp | ProcExp | LetExp | LitExp | DictExp ;
 export type CExp = AtomicExp | CompoundExp;
 
 export type Program = { tag: "Program"; exps: Exp[]; }
@@ -113,36 +113,37 @@ export const isLetExp = (x: any): x is LetExp => x.tag === "LetExp";
 // L3
 export const isLitExp = (x: any): x is LitExp => x.tag === "LitExp";
 
-// TODO: Add DictExp and DictLitExp types and predicates
+// TODO: Add DictExp types and predicates
 export type DictEntry = {
     key: SymbolSExp;
     value: CExp;
 }
 export type DictExp = {
     tag: "DictExp";
-    entries: Binding[];
-}
-export type DictLitExp = {
-    tag: "DictLitExp";
     entries: DictEntry[];
 }
+// export type DictLitExp = {
+//     tag: "DictLitExp";
+//     entries: DictEntry[];
+// }
 export type DictRefExp = { tag: "DictRefExp"; dict: CExp; key: CExp };
 
 // DictEntry will represent a key-value pair in the dictionary 
 export const makeDictEntry = (key: SymbolSExp, value: CExp): DictEntry => ({ key, value });
 
 // DictExp will represent a dictionary expression with a list of entries
-export const makeDictExp = (entries: Binding[]): DictExp =>
-    ({ tag: "DictExp", entries: entries });
+// export const makeDictExp = (entries: Binding[]): DictExp =>
+//     ({ tag: "DictExp", entries: entries });
 
 // DictLitExp will represent a dictionary literal expression with a list of entries
-export const makeDictLitExp = (entries: DictEntry[]): DictLitExp =>
-    ({ tag: "DictLitExp", entries: entries }); export const makeDictRefExp = (dict: CExp, key: CExp): DictRefExp => ({ tag: "DictRefExp", dict, key });
+export const makeDictExp = (entries: DictEntry[]): DictExp =>
+    ({ tag: "DictExp", entries: entries }); 
+export const makeDictRefExp = (dict: CExp, key: CExp): DictRefExp => ({ tag: "DictRefExp", dict, key });
 
 // Predicate functions for DictExp and DictLitExp
 export const isDictExp = (x: any): x is DictExp => x.tag === "DictExp";
 export const isDictEntry = (x: any): x is DictEntry => x.key !== undefined && x.value !== undefined;
-export const isDictLitExp = (x: any): x is DictLitExp => x.tag === "DictLitExp";
+// export const isDictLitExp = (x: any): x is DictLitExp => x.tag === "DictLitExp";
 
 
 // Type predicates for type unions
@@ -152,7 +153,7 @@ export const isAtomicExp = (x: any): x is AtomicExp =>
     isPrimOp(x) || isVarRef(x);
 export const isCompoundExp = (x: any): x is CompoundExp =>
     isAppExp(x) || isIfExp(x) || isProcExp(x) || isLitExp(x) ||
-    isLetExp(x) || isDictExp(x) || isDictLitExp(x);
+    isLetExp(x) || isDictExp(x) ;
 export const isCExp = (x: any): x is CExp =>
     isAtomicExp(x) || isCompoundExp(x);
 
@@ -209,7 +210,7 @@ export const parseDictExp = (params: Sexp[]): Result<DictExp> =>
     isGoodBindings(params)
         ? bind(
               mapResult(parseL32CExp, map(second, params)),
-              (vals: CExp[]) => makeOk(makeDictExp(zipWith(makeBinding, map((param) => first(param) as string, params), vals))
+              (vals: CExp[]) => makeOk(makeDictExp(zipWith((key, value) => makeDictEntry(makeSymbolSExp(key as string), value), map((param) => first(param) as string, params), vals))
           )
         ) : makeFailure('entries in "dict" expression are not valid');
 
@@ -385,6 +386,6 @@ export const unparseL32 = (exp: Program | Exp): string =>
                                         isLetExp(exp) ? unparseLetExp(exp) :
                                             isDefineExp(exp) ? `(define ${exp.var.var} ${unparseL32(exp.val)})` :
                                                 isProgram(exp) ? `(L32 ${unparseLExps(exp.exps)})` :
-                                                    isDictExp(exp) ? `(dict ${map((entry: Binding) => `(${entry.var.var} ${unparseL32(entry.val)})`, exp.entries).join(" ")})` :
-                                                        isDictLitExp(exp) ? `(dict ${map((entry: DictEntry) => `(${entry.key} ${unparseL32(entry.value)})`, (exp as DictLitExp).entries).join(" ")})` :
+                                                    isDictExp(exp) ? `(dict ${map((entry: DictEntry) => `(${entry.key.val} ${unparseL32(entry.value)})`, exp.entries).join(" ")})` :
+                                                        // isDictLitExp(exp) ? `(dict ${map((entry: DictEntry) => `(${entry.key} ${unparseL32(entry.value)})`, (exp as DictLitExp).entries).join(" ")})` :
                                                             exp;
