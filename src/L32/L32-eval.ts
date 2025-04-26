@@ -1,14 +1,14 @@
 // L32-eval.ts
 import { map } from "ramda";
-import { isCExp, isDictExp, isLetExp } from "./L32-ast";
-import { BoolExp, CExp, DictExp, Exp, IfExp, LitExp, NumExp,
-         PrimOp, ProcExp, Program, StrExp, VarDecl, DictEntry } from "./L32-ast";
+import { isCExp, isLetExp } from "./L32-ast";
+import { BoolExp, CExp, Exp, IfExp, LitExp, NumExp,
+         PrimOp, ProcExp, Program, StrExp, VarDecl, DictExp, DictLitExp, DictEntry} from "./L32-ast";
 import { isAppExp, isBoolExp, isDefineExp, isIfExp, isLitExp, isNumExp,
-             isPrimOp, isProcExp, isStrExp, isVarRef } from "./L32-ast";
-import { makeBoolExp, makeLitExp, makeNumExp, makeProcExp, makeStrExp, makeDictExp } from "./L32-ast";
+             isPrimOp, isProcExp, isStrExp, isVarRef ,isDictExp, Binding, isDictLitExp } from "./L32-ast";
+import { makeBoolExp, makeLitExp, makeNumExp, makeProcExp, makeStrExp ,makeDictLitExp} from "./L32-ast";
 import { parseL32Exp } from "./L32-ast";
 import { applyEnv, makeEmptyEnv, makeEnv, Env } from "./L32-env";
-import { isClosure, makeClosure, Closure, Value, CompoundSExp, EmptySExp, SymbolSExp, SExpValue, isSymbolSExp, makeDictValue } from "./L32-value";
+import { isClosure, makeClosure, Closure, Value,DictValue , makeDictValue,isDictValue,isSymbolSExp,DictEntryValue,isCompoundSExp,makeSymbolSExp} from "./L32-value";
 import { first, rest, isEmpty, List, isNonEmptyList } from '../shared/list';
 import { isBoolean, isNumber, isString } from "../shared/type-predicates";
 import { Result, makeOk, makeFailure, bind, mapResult, mapv } from "../shared/result";
@@ -34,34 +34,62 @@ const L32applicativeEval = (exp: CExp, env: Env): Result<Value> =>
                         bind(mapResult(param => L32applicativeEval(param, env), exp.rands), (rands: Value[]) =>
                             L32applyProcedure(rator, rands, env))) :
     isLetExp(exp) ? makeFailure('"let" not supported (yet)') :
-    // TODO: add support for "dict" expression
-    isDictExp(exp) ? evalDictExp(exp, env) :
+    isDictExp(exp) ? evalDict(exp, env) :
+    isDictLitExp(exp) ? evalDictLit(exp, env) :
     exp;
 
-/**
- * Evaluates a dictionary expression by applying the environment to each of its entries.
- * Each entry is a key-value EntryDict, where the key is a Symbol and the value is a CExp.
- * @param exp an DictExp
- * @param env the environment to use for evaluation
- * @returns a Result containing the evaluated dictionary value
- *          or an error message if the evaluation fails.
- */
-const evalDictExp = (exp: DictExp, env: Env): Result<Value> =>
-    // Evaluate each entry in the dictionary
-    bind(
-        mapResult((entry: DictEntry): Result<[string, Value]> =>
-            // Ensure the key is a symbol and evaluate the value
-            bind(L32applicativeEval(entry.val, env), (val: Value) =>
-                isSymbolSExp(entry.key)
-                    ? makeOk([entry.key.val, val])
-                    : makeFailure(`Key ${entry.key} is not a symbol`)
-            ),
-            exp.entries
-        ),
-        // Convert the evaluated entries into a DictValue
-        (evaluatedEntries: Array<[string, Value]>) =>
-            makeOk(makeDictValue(evaluatedEntries))
-    );
+    /**
+     * Evaluates a dictionary literal expression(DictLitExp) in the given environment.
+     * 
+     * @param exp - The dictionary literal expression to evaluate.
+     * @param env - The environment in which to evaluate the expression.
+     * @returns A `Result` containing the evaluated dictionary value if successful, 
+     *          or an error if the evaluation fails.
+     * 
+     * The function processes each dictionary entry by:
+     * 1. Evaluating the key as a literal expression.
+     * 2. Evaluating the value expression.
+     * 3. Combining the evaluated key and value into a `DictEntryValue`.
+     * 
+     * Finally, it aggregates all evaluated entries into a dictionary value.
+     */
+    const evalDictLit = (exp: DictLitExp, env: Env): Result<Value> => {
+        const evalEntry = (entry: DictEntry): Result<DictEntryValue> =>
+            bind(L32applicativeEval(makeLitExp(entry.key), env), (key: Value) =>
+            bind(L32applicativeEval(entry.value, env), (value: Value) =>
+            makeOk({key, value})));
+    
+        return bind(mapResult(evalEntry, exp.entries), (entries: DictEntryValue[]) =>
+            makeOk(makeDictValue(entries)));
+    }
+
+   
+    /**
+     * Evaluates a dictionary expression (`DictExp`) in the given environment (`Env`).
+     * 
+     * @param exp - The dictionary expression to evaluate, containing a list of bindings.
+     * @param env - The environment in which to evaluate the dictionary expression.
+     * @returns A `Result` containing either the evaluated dictionary as a `DictValue` 
+     *          or an error if evaluation fails.
+     * 
+     * The function processes each binding in the dictionary expression by:
+     * 1. Evaluating the value of the binding in the given environment.
+     * 2. Converting the variable name of the binding into a `SymbolSExp`.
+     * 3. Constructing a `DictEntryValue` object with the key and evaluated value.
+     * 
+     * Finally, it combines all evaluated bindings into a `DictValue` object.
+     */
+    const evalDict = (exp: DictExp, env: Env): Result<Value> => {
+        const evalBinding = (binding: Binding): Result<DictEntryValue> =>
+            bind(L32applicativeEval(binding.val, env), (value: Value) =>
+                makeOk({
+                    key: makeSymbolSExp(binding.var.var), // Convert var name to symbol
+                    value
+                }));
+    
+        return bind(mapResult(evalBinding, exp.entries), (entries: DictEntryValue[]) =>
+            makeOk(makeDictValue(entries)));
+    }
 
 export const isTrueValue = (x: Value): boolean =>
     ! (x === false);
@@ -77,35 +105,57 @@ const evalProc = (exp: ProcExp, env: Env): Result<Closure> =>
 const L32applyProcedure = (proc: Value, args: Value[], env: Env): Result<Value> =>
     isPrimOp(proc) ? applyPrimitive(proc, args) :
     isClosure(proc) ? applyClosure(proc, args, env) :
-    isDictExp(proc) ? applyDict(proc, args, env) :
+    isDictValue(proc) ? findInDict(proc, args) :
     makeFailure(`Bad procedure ${format(proc)}`);
 
 /**
- * Apply a dictionary to a key and return the associated value.
- * If the key is not found, return an error message.
- * @param proc an DictExp
- * @param args an argument to apply to the dict, find is value
- * @param env the environment to use for evaluation
- * @returns a Result containing the value associated with the key in the dict, or an error message
- *          if the key is not found or if the argument is not a string.
+ * Find the value associated with a key in a dictionary.
+ * 
+ * @param dict - The dictionary value to perform the lookup on. It contains entries with keys and values.
+ * @param args - An array of values to use as arguments for the lookup. 
+ *               Only a single argument is expected, representing the key to search for.
+ * @returns A `Result` containing:
+ *          - `Ok` with the value associated with the key if the key is found in the dictionary.
+ *          - `Failure` with an error message if the key is not found or if the number of arguments is not exactly 1.
  */
-const applyDict = (proc: DictExp, args: Value[], env: Env): Result<Value> =>
-    args.length !== 1 ? makeFailure("Dicts only take one argument") :
-    isString(args[0]) ?
-        bind(makeOk(proc.entries.find(({ key }) => key === args[0])), (entry) =>
-            entry ? L32applicativeEval(entry.val, env) : makeFailure(`Key ${args[0]} not found`)) :
-    makeFailure("Dicts only take string arguments");
+const findInDict = (dict: DictValue, args: Value[]): Result<Value> => 
+    args.length === 1 
+        ? bind(makeOk(dict.entries.find(e => deepEquals(e.key, args[0]))), (entry) =>
+            entry ? makeOk(entry.value) : makeFailure(`Key not found in dictionary: ${format(args[0])}. Dictionary contents: ${printDict(dict)}`))
+        : makeFailure(`Expected exactly 1 argument for dict lookup, got ${args.length}. Dictionary contents: ${printDict(dict)}`);
+const printDict = (dict: DictValue): string => {
+    const entries = dict.entries.map(entry => `${format(entry.key)}: ${format(entry.value)}`);
+    return `{ ${entries.join(", ")} }`;
+}
+
+/**
+ * Compares two `Value` objects for deep equality.
+ * 
+ * This function checks if two values are deeply equal by comparing their types
+ * and recursively comparing their properties if they are compound or symbolic expressions.
+ * 
+ * @param a - The first `Value` to compare.
+ * @param b - The second `Value` to compare.
+ * @returns `true` if the two values are deeply equal, otherwise `false`.
+ */
+const deepEquals = (a: Value, b: Value): boolean => 
+    (typeof a === typeof b) &&
+    (isSymbolSExp(a) && isSymbolSExp(b) ? a.val === b.val :
+    isCompoundSExp(a) && isCompoundSExp(b) ? deepEquals(a.val1, b.val1) && deepEquals(a.val2, b.val2) :
+    a === b);
 
 // Applications are computed by substituting computed
 // values into the body of the closure.
 // To make the types fit - computed values of params must be
 // turned back in Literal Expressions that eval to the computed value.
-const valueToLitExp = (v: Value): NumExp | BoolExp | StrExp | LitExp | PrimOp | ProcExp =>
+const valueToLitExp = (v: Value): NumExp | BoolExp | StrExp | LitExp | PrimOp | ProcExp | DictLitExp =>
     isNumber(v) ? makeNumExp(v) :
     isBoolean(v) ? makeBoolExp(v) :
     isString(v) ? makeStrExp(v) :
     isPrimOp(v) ? v :
     isClosure(v) ? makeProcExp(v.params, v.body) :
+    // check if isDictValue and convert to DictLitExp 
+    isDictValue(v) ? makeDictLitExp(v.entries.map(entry => ({ key: makeSymbolSExp(format(entry.key)), value: valueToLitExp(entry.value) }))) :
     makeLitExp(v);
 
 const applyClosure = (proc: Closure, args: Value[], env: Env): Result<Value> => {

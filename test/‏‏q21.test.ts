@@ -71,5 +71,13 @@ describe('Q21 Tests', () => {
         expect(evalP(`(L31
                       (get (dict '((a . x) (b . y) (c . 3))) 't))`)).is.satisfy(isFailure);
     });
+    it("Q21 Tamari's test 5 - same key get function", () => {
+        expect(evalP(`(L31
+            (get (dict '((a . x) (a . y) (c . 3))) 'c))`)).is.satisfy(isFailure);
+    });
+
+    it("Q21 Tamari's test 6 - same key dict validation", () => {
+        expect(evalP(`(L31 (dict? (dict '((a . 1) (a . 2)))))`)).is.satisfy(isFailure);
+    });
 
 });

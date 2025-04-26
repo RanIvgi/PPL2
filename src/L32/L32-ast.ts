@@ -1,7 +1,7 @@
 // ===========================================================
 // AST type models
-import { is, map, zipWith } from "ramda";
-import { makeEmptySExp, makeSymbolSExp, SExpValue, makeCompoundSExp, valueToString, SymbolSExp } from './L32-value'
+import { map, zipWith } from "ramda";
+import { makeEmptySExp, makeSymbolSExp, SExpValue, makeCompoundSExp, valueToString } from './L32-value'
 import { first, second, rest, allT, isEmpty, isNonEmptyList, List, NonEmptyList } from "../shared/list";
 import { isArray, isString, isNumericString, isIdentifier } from "../shared/type-predicates";
 import { Result, makeOk, makeFailure, bind, mapResult, mapv } from "../shared/result";
@@ -47,54 +47,51 @@ import { Sexp, Token } from "s-expression";
 
 export type Exp = DefineExp | CExp;
 export type AtomicExp = NumExp | BoolExp | StrExp | PrimOp | VarRef;
-export type CompoundExp = AppExp | IfExp | ProcExp | LetExp | LitExp | DictExp;
+export type CompoundExp = AppExp | IfExp | ProcExp | LetExp | LitExp;
 export type CExp =  AtomicExp | CompoundExp;
 
-export type Program = {tag: "Program"; exps: Exp[]; }
-export type DefineExp = {tag: "DefineExp"; var: VarDecl; val: CExp; }
-export type NumExp = {tag: "NumExp"; val: number; }
-export type BoolExp = {tag: "BoolExp"; val: boolean; }
-export type StrExp = {tag: "StrExp"; val: string; }
-export type PrimOp = {tag: "PrimOp"; op: string; }
-export type VarRef = {tag: "VarRef"; var: string; }
-export type VarDecl = {tag: "VarDecl"; var: string; }
-export type AppExp = {tag: "AppExp"; rator: CExp; rands: CExp[]; }
+export type Program = { tag: "Program"; exps: Exp[]; }
+export type DefineExp = { tag: "DefineExp"; var: VarDecl; val: CExp; }
+export type NumExp = { tag: "NumExp"; val: number; }
+export type BoolExp = { tag: "BoolExp"; val: boolean; }
+export type StrExp = { tag: "StrExp"; val: string; }
+export type PrimOp = { tag: "PrimOp"; op: string; }
+export type VarRef = { tag: "VarRef"; var: string; }
+export type VarDecl = { tag: "VarDecl"; var: string; }
+export type AppExp = { tag: "AppExp"; rator: CExp; rands: CExp[]; }
 // L2
-export type IfExp = {tag: "IfExp"; test: CExp; then: CExp; alt: CExp; }
-export type ProcExp = {tag: "ProcExp"; args: VarDecl[], body: CExp[]; }
-export type Binding = {tag: "Binding"; var: VarDecl; val: CExp; }
-export type LetExp = {tag: "LetExp"; bindings: Binding[]; body: CExp[]; }
+export type IfExp = { tag: "IfExp"; test: CExp; then: CExp; alt: CExp; }
+export type ProcExp = { tag: "ProcExp"; args: VarDecl[], body: CExp[]; }
+export type Binding = { tag: "Binding"; var: VarDecl; val: CExp; }
+export type LetExp = { tag: "LetExp"; bindings: Binding[]; body: CExp[]; }
 // L3
 export type LitExp = {tag: "LitExp"; val: SExpValue; }
 
-// dictionary as a list of pairs
-export type DictExp = {tag: "DictLitExp"; entries: DictEntry[]; }
-export type DictEntry = {tag: "DictEntry"; key: SExpValue; val: CExp; }
-
 // Type value constructors for disjoint types
-export const makeProgram = (exps: Exp[]): Program => ({tag: "Program", exps: exps});
+export const makeProgram = (exps: Exp[]): Program => ({ tag: "Program", exps: exps });
 export const makeDefineExp = (v: VarDecl, val: CExp): DefineExp =>
-    ({tag: "DefineExp", var: v, val: val});
-export const makeNumExp = (n: number): NumExp => ({tag: "NumExp", val: n});
-export const makeBoolExp = (b: boolean): BoolExp => ({tag: "BoolExp", val: b});
-export const makeStrExp = (s: string): StrExp => ({tag: "StrExp", val: s});
-export const makePrimOp = (op: string): PrimOp => ({tag: "PrimOp", op: op});
-export const makeVarRef = (v: string): VarRef => ({tag: "VarRef", var: v});
-export const makeVarDecl = (v: string): VarDecl => ({tag: "VarDecl", var: v});
+    ({ tag: "DefineExp", var: v, val: val });
+export const makeNumExp = (n: number): NumExp => ({ tag: "NumExp", val: n });
+export const makeBoolExp = (b: boolean): BoolExp => ({ tag: "BoolExp", val: b });
+export const makeStrExp = (s: string): StrExp => ({ tag: "StrExp", val: s });
+export const makePrimOp = (op: string): PrimOp => ({ tag: "PrimOp", op: op });
+export const makeVarRef = (v: string): VarRef => ({ tag: "VarRef", var: v });
+export const makeVarDecl = (v: string): VarDecl => ({ tag: "VarDecl", var: v });
 export const makeAppExp = (rator: CExp, rands: CExp[]): AppExp =>
-    ({tag: "AppExp", rator: rator, rands: rands});
+    ({ tag: "AppExp", rator: rator, rands: rands });
 // L2
 export const makeIfExp = (test: CExp, then: CExp, alt: CExp): IfExp =>
-    ({tag: "IfExp", test: test, then: then, alt: alt});
+    ({ tag: "IfExp", test: test, then: then, alt: alt });
 export const makeProcExp = (args: VarDecl[], body: CExp[]): ProcExp =>
-    ({tag: "ProcExp", args: args, body: body});
+    ({ tag: "ProcExp", args: args, body: body });
 export const makeBinding = (v: string, val: CExp): Binding =>
-    ({tag: "Binding", var: makeVarDecl(v), val: val});
+    ({ tag: "Binding", var: makeVarDecl(v), val: val });
 export const makeLetExp = (bindings: Binding[], body: CExp[]): LetExp =>
-    ({tag: "LetExp", bindings: bindings, body: body});
+    ({ tag: "LetExp", bindings: bindings, body: body });
 // L3
 export const makeLitExp = (val: SExpValue): LitExp =>
-    ({tag: "LitExp", val: val});
+    ({ tag: "LitExp", val: val });
+
 
 // dictionary as a list of pairs
 export const makeDictExp = (entries: DictEntry[]): DictExp =>
@@ -121,10 +118,10 @@ export const isLetExp = (x: any): x is LetExp => x.tag === "LetExp";
 // L3
 export const isLitExp = (x: any): x is LitExp => x.tag === "LitExp";
 
-// dictionary as a list of pairs
+// TODO: Add DictExp and DictLitExp types and predicates
+export type DictExp = { tag: "DictExp"; entries: [string, CExp][]; };
+
 export const isDictExp = (x: any): x is DictExp => x.tag === "DictExp";
-export const isDictEntry = (x: any): x is DictEntry => x.tag === "DictEntry";
-export const isEmptyDictEntry = (x: any): x is DictEntry => x.tag === "EmptyDictEntry";
 
 // Type predicates for type unions
 export const isExp = (x: any): x is Exp => isDefineExp(x) || isCExp(x);
@@ -132,7 +129,7 @@ export const isAtomicExp = (x: any): x is AtomicExp =>
     isNumExp(x) || isBoolExp(x) || isStrExp(x) ||
     isPrimOp(x) || isVarRef(x);
 export const isCompoundExp = (x: any): x is CompoundExp =>
-    isAppExp(x) || isIfExp(x) || isProcExp(x) || isLitExp(x) || isLetExp(x) || isDictExp(x);
+    isAppExp(x) || isIfExp(x) || isProcExp(x) || isLitExp(x) || isLetExp(x);
 export const isCExp = (x: any): x is CExp =>
     isAtomicExp(x) || isCompoundExp(x);
 
@@ -144,33 +141,64 @@ export const parseL32 = (x: string): Result<Program> =>
 
 export const parseL32Program = (sexp: Sexp): Result<Program> =>
     sexp === "" || isEmpty(sexp) ? makeFailure("Unexpected empty program") :
-    isToken(sexp) ? makeFailure(`Program cannot be a single token: ${format(sexp)}`) :
-    isNonEmptyList<Sexp>(sexp) ? parseL32GoodProgram(first(sexp), rest(sexp)) :
-    makeFailure(`Unexpected type ${format(sexp)}`);
+        isToken(sexp) ? makeFailure(`Program cannot be a single token: ${format(sexp)}`) :
+            isNonEmptyList<Sexp>(sexp) ? parseL32GoodProgram(first(sexp), rest(sexp)) :
+                makeFailure(`Unexpected type ${format(sexp)}`);
 
 const parseL32GoodProgram = (keyword: Sexp, body: Sexp[]): Result<Program> =>
-    keyword === "L32" && !isEmpty(body) ? mapv(mapResult(parseL32Exp, body), (exps: Exp[]) => 
-                                              makeProgram(exps)) :
-    makeFailure(`Program must be of the form (L32 <exp>+): ${format([keyword, ...body])}`);
+    keyword === "L32" && !isEmpty(body) ? mapv(mapResult(parseL32Exp, body), (exps: Exp[]) =>
+        makeProgram(exps)) :
+        makeFailure(`Program must be of the form (L32 <exp>+): ${format([keyword, ...body])}`);
 
 // Exp -> <DefineExp> | <Cexp>
 export const parseL32Exp = (sexp: Sexp): Result<Exp> =>
-    isCompoundSexp(sexp) ? 
+    isCompoundSexp(sexp) ?
         isNonEmptyList<Sexp>(sexp) ? parseL32CompoundExp(first(sexp), rest(sexp)) :
-        makeFailure(`Exp cannot be an empty list: ${format(sexp)}`) :
-    isToken(sexp) ? parseL32Atomic(sexp) :
-    makeFailure(`Bad param: ${sexp}`);
+            makeFailure(`Exp cannot be an empty list: ${format(sexp)}`) :
+        isToken(sexp) ? parseL32Atomic(sexp) :
+            makeFailure(`Bad param: ${sexp}`);
 
 // Compound -> DefineExp | CompoundCExp
-export const parseL32CompoundExp = (op: Sexp, params: Sexp[]): Result<Exp> => 
-    op === "define"? parseDefine(params) :
-    parseL32CompoundCExp(op, params);
+export const parseL32CompoundExp = (op: Sexp, params: Sexp[]): Result<Exp> =>
+    op === "define" ? parseDefine(params) :
+        parseL32CompoundCExp(op, params);
 
 // CompoundCExp -> IfExp | ProcExp | LetExp | LitExp | AppExp | DictExp
 export const parseL32CompoundCExp = (op: Sexp, params: Sexp[]): Result<CExp> =>
     isString(op) && isSpecialForm(op) ? parseL32SpecialForm(op, params) :
-    parseAppExp(op, params);
+        parseAppExp(op, params);
+// DictExp -> DictLitExp | DictExp, this function is used to parse the dictionary literal expression 
+// export const parseDictKey = (key: Sexp): Result<string> =>
+//     isString(key)
+//         ? makeOk(key)
+//         : makeFailure(`Dictionary keys must be strings: ${format(key)}`);
 
+// DictEntry -> (key, value) | (key, CExp)
+// export const parseDictEntry = (keySexp: Sexp, valueSexp: Sexp): Result<DictEntry> =>
+//     bind(parseSExp(keySexp), (key: SExpValue) =>
+//         isSymbolSExp(key)
+//             ? bind(parseL32CExp(valueSexp), (value: CExp) =>
+//                 makeOk(makeDictEntry(key, value))
+//             ) : makeFailure(`Dictionary keys must be symbols: ${format(keySexp)}`));
+
+// DictLitExp -> (dict (key, value)*) | (dict (key, CExp)*)
+export const parseDictExp = (params: Sexp[]): Result<DictExp> =>
+    isGoodBindings(params)
+        ? bind(
+              mapResult(parseL32CExp, map(second, params)),
+              (vals: CExp[]) => makeOk(makeDictExp(zipWith(makeBinding, map((param) => first(param) as string, params), vals))
+          )
+        ) : makeFailure('entries in "dict" expression are not valid');
+
+
+// export const parseDictRefExp = (params: Sexp[]): Result<DictRefExp> =>
+//     params.length === 2
+//         ? bind(parseL32CExp(params[0]), (dict: CExp) =>
+//             bind(parseL32CExp(params[1]), (key: CExp) =>
+//                 makeOk(makeDictRefExp(dict, key))))
+//         : makeFailure(`Invalid expression: ${format(params)}`);
+
+// DictExp -> (dict? <CExp>) | (get <CExp> <CExp>) | (dict <CExp> <CExp>) | (dict? <CExp>) | (get <CExp> <CExp>) | (dict <CExp> <CExp>) 
 export const parseL32SpecialForm = (op: Sexp, params: Sexp[]): Result<CExp> =>
     isEmpty(params) ? makeFailure("Empty args for special form") :
     op === "if" ? parseIfExp(params) :
@@ -183,39 +211,36 @@ export const parseL32SpecialForm = (op: Sexp, params: Sexp[]): Result<CExp> =>
     op === "quote" ? 
         isNonEmptyList<Sexp>(params) ? parseLitExp(first(params)) :
         makeFailure(`Bad quote exp: ${params}`) :
-    op === "dict" ? 
-        isNonEmptyList<Sexp>(params) ? parseDictExp(params) :
-        makeFailure(`Bad dict exp: ${params}`) :
     makeFailure("Never");
 
 // DefineExp -> (define <varDecl> <CExp>)
 export const parseDefine = (params: List<Sexp>): Result<DefineExp> =>
-    isNonEmptyList<Sexp>(params) ? 
+    isNonEmptyList<Sexp>(params) ?
         isEmpty(rest(params)) ? makeFailure(`define missing 1 arguments: ${format(params)}`) :
-        (params.length > 2) ? makeFailure(`define too many arguments: ${format(params)}`) :
-        parseGoodDefine(first(params), second(params)) :
-    makeFailure("define missing 2 arguments");
+            (params.length > 2) ? makeFailure(`define too many arguments: ${format(params)}`) :
+                parseGoodDefine(first(params), second(params)) :
+        makeFailure("define missing 2 arguments");
 
 const parseGoodDefine = (variable: Sexp, val: Sexp): Result<DefineExp> =>
-    ! isIdentifier(variable) ? makeFailure(`First arg of define must be an identifier: ${format(variable)}`) :
-    mapv(parseL32CExp(val), (value: CExp) => 
-         makeDefineExp(makeVarDecl(variable), value));
+    !isIdentifier(variable) ? makeFailure(`First arg of define must be an identifier: ${format(variable)}`) :
+        mapv(parseL32CExp(val), (value: CExp) =>
+            makeDefineExp(makeVarDecl(variable), value));
 
 export const parseL32CExp = (sexp: Sexp): Result<CExp> =>
-    isCompoundSexp(sexp) ? 
+    isCompoundSexp(sexp) ?
         isNonEmptyList<Sexp>(sexp) ? parseL32CompoundCExp(first(sexp), rest(sexp)) :
-        makeFailure("CExp cannot be an empty list") :
-    isToken(sexp) ? parseL32Atomic(sexp) :
-    makeFailure(`Bad sexp: ${sexp}`);
+            makeFailure("CExp cannot be an empty list") :
+        isToken(sexp) ? parseL32Atomic(sexp) :
+            makeFailure(`Bad sexp: ${sexp}`);
 
 // Atomic -> number | boolean | primitiveOp | string
 export const parseL32Atomic = (token: Token): Result<CExp> =>
     token === "#t" ? makeOk(makeBoolExp(true)) :
-    token === "#f" ? makeOk(makeBoolExp(false)) :
-    isString(token) && isNumericString(token) ? makeOk(makeNumExp(+token)) :
-    isString(token) && isPrimitiveOp(token) ? makeOk(makePrimOp(token)) :
-    isString(token) ? makeOk(makeVarRef(token)) :
-    makeOk(makeStrExp(token.toString()));
+        token === "#f" ? makeOk(makeBoolExp(false)) :
+            isString(token) && isNumericString(token) ? makeOk(makeNumExp(+token)) :
+                isString(token) && isPrimitiveOp(token) ? makeOk(makePrimOp(token)) :
+                    isString(token) ? makeOk(makeVarRef(token)) :
+                        makeOk(makeStrExp(token.toString()));
 
 /*
     ;; <prim-op>  ::= + | - | * | / | < | > | = | not | and | or | eq? | string=?
@@ -224,26 +249,26 @@ export const parseL32Atomic = (token: Token): Result<CExp> =>
 */
 const isPrimitiveOp = (x: string): boolean =>
     ["+", "-", "*", "/", ">", "<", "=", "not", "and", "or",
-     "eq?", "string=?", "cons", "car", "cdr", "list", "pair?",
-     "number?", "boolean?", "symbol?", "string?"].includes(x);
+        "eq?", "string=?", "cons", "car", "cdr", "list", "pair?",
+        "number?", "boolean?", "symbol?", "string?"].includes(x);
 
 const isSpecialForm = (x: string): boolean =>
     ["if", "lambda", "let", "quote", "dict"].includes(x);
 
 const parseAppExp = (op: Sexp, params: Sexp[]): Result<AppExp> =>
-    bind(parseL32CExp(op), (rator: CExp) => 
+    bind(parseL32CExp(op), (rator: CExp) =>
         mapv(mapResult(parseL32CExp, params), (rands: CExp[]) =>
-             makeAppExp(rator, rands)));
+            makeAppExp(rator, rands)));
 
 const parseIfExp = (params: Sexp[]): Result<IfExp> =>
     params.length !== 3 ? makeFailure(`Expression not of the form (if <cexp> <cexp> <cexp>): ${format(params)}`) :
-    mapv(mapResult(parseL32CExp, params), (cexps: CExp[]) => 
-        makeIfExp(cexps[0], cexps[1], cexps[2]));
+        mapv(mapResult(parseL32CExp, params), (cexps: CExp[]) =>
+            makeIfExp(cexps[0], cexps[1], cexps[2]));
 
 const parseProcExp = (vars: Sexp, body: Sexp[]): Result<ProcExp> =>
-    isArray(vars) && allT(isString, vars) ? mapv(mapResult(parseL32CExp, body), (cexps: CExp[]) => 
-                                                 makeProcExp(map(makeVarDecl, vars), cexps)) :
-    makeFailure(`Invalid vars for ProcExp ${format(vars)}`);
+    isArray(vars) && allT(isString, vars) ? mapv(mapResult(parseL32CExp, body), (cexps: CExp[]) =>
+        makeProcExp(map(makeVarDecl, vars), cexps)) :
+        makeFailure(`Invalid vars for ProcExp ${format(vars)}`);
 
 const isGoodBindings = (bindings: Sexp): bindings is [string, Sexp][] =>
     isArray(bindings) &&
@@ -283,42 +308,42 @@ const parseLetExp = (bindings: Sexp, body: Sexp[]): Result<LetExp> => {
     const vars = map(b => b[0], bindings);
     const valsResult = mapResult(parseL32CExp, map(second, bindings));
     const bindingsResult = mapv(valsResult, (vals: CExp[]) => zipWith(makeBinding, vars, vals));
-    return bind(bindingsResult, (bindings: Binding[]) => 
-                mapv(mapResult(parseL32CExp, body), (body: CExp[]) =>
-                     makeLetExp(bindings, body)));
+    return bind(bindingsResult, (bindings: Binding[]) =>
+        mapv(mapResult(parseL32CExp, body), (body: CExp[]) =>
+            makeLetExp(bindings, body)));
 }
 
 // sexps has the shape (quote <sexp>)
 export const parseLitExp = (param: Sexp): Result<LitExp> =>
-    mapv(parseSExp(param), (sexp: SExpValue) => 
-         makeLitExp(sexp));
+    mapv(parseSExp(param), (sexp: SExpValue) =>
+        makeLitExp(sexp));
 
 export const isDottedPair = (sexps: Sexp[]): boolean =>
-    sexps.length === 3 && 
+    sexps.length === 3 &&
     sexps[1] === "."
 
-export const makeDottedPair = (sexps : Sexp[]): Result<SExpValue> =>
-    bind(parseSExp(sexps[0]), (val1: SExpValue) => 
+export const makeDottedPair = (sexps: Sexp[]): Result<SExpValue> =>
+    bind(parseSExp(sexps[0]), (val1: SExpValue) =>
         mapv(parseSExp(sexps[2]), (val2: SExpValue) =>
-             makeCompoundSExp(val1, val2)));
+            makeCompoundSExp(val1, val2)));
 
 // x is the output of p (sexp parser)
 export const parseSExp = (sexp: Sexp): Result<SExpValue> =>
     sexp === "#t" ? makeOk(true) :
-    sexp === "#f" ? makeOk(false) :
-    isString(sexp) && isNumericString(sexp) ? makeOk(+sexp) :
-    isSexpString(sexp) ? makeOk(sexp.toString()) :
-    isString(sexp) ? makeOk(makeSymbolSExp(sexp)) :
-    sexp.length === 0 ? makeOk(makeEmptySExp()) :
-    isDottedPair(sexp) ? makeDottedPair(sexp) :
-    isNonEmptyList<Sexp>(sexp) ? (
-        // fail on (x . y z)
-        first(sexp) === '.' ? makeFailure(`Bad dotted sexp: ${format(sexp)}`) : 
-        bind(parseSExp(first(sexp)), (val1: SExpValue) =>
-             mapv(parseSExp(rest(sexp)), (val2: SExpValue) =>
-                  makeCompoundSExp(val1, val2))) 
-        ) :
-    makeFailure(`Bad sexp: ${sexp}`);
+        sexp === "#f" ? makeOk(false) :
+            isString(sexp) && isNumericString(sexp) ? makeOk(+sexp) :
+                isSexpString(sexp) ? makeOk(sexp.toString()) :
+                    isString(sexp) ? makeOk(makeSymbolSExp(sexp)) :
+                        sexp.length === 0 ? makeOk(makeEmptySExp()) :
+                            isDottedPair(sexp) ? makeDottedPair(sexp) :
+                                isNonEmptyList<Sexp>(sexp) ? (
+                                    // fail on (x . y z)
+                                    first(sexp) === '.' ? makeFailure(`Bad dotted sexp: ${format(sexp)}`) :
+                                        bind(parseSExp(first(sexp)), (val1: SExpValue) =>
+                                            mapv(parseSExp(rest(sexp)), (val2: SExpValue) =>
+                                                makeCompoundSExp(val1, val2)))
+                                ) :
+                                    makeFailure(`Bad sexp: ${sexp}`);
 
 
 // ==========================================================================
@@ -330,17 +355,17 @@ import { format } from "../shared/format";
 // Add a quote for symbols, empty and compound sexp - strings and numbers are not quoted.
 const unparseLitExp = (le: LitExp): string =>
     isEmptySExp(le.val) ? `'()` :
-    isSymbolSExp(le.val) ? `'${valueToString(le.val)}` :
-    isCompoundSExp(le.val) ? `'${valueToString(le.val)}` :
-    `${le.val}`;
+        isSymbolSExp(le.val) ? `'${valueToString(le.val)}` :
+            isCompoundSExp(le.val) ? `'${valueToString(le.val)}` :
+                `${le.val}`;
 
 const unparseLExps = (les: Exp[]): string =>
     map(unparseL32, les).join(" ");
 
-const unparseProcExp = (pe: ProcExp): string => 
+const unparseProcExp = (pe: ProcExp): string =>
     `(lambda (${map((p: VarDecl) => p.var, pe.args).join(" ")}) ${unparseLExps(pe.body)})`
 
-const unparseLetExp = (le: LetExp) : string => 
+const unparseLetExp = (le: LetExp): string =>
     `(let (${map((b: Binding) => `(${b.var.var} ${unparseL32(b.val)})`, le.bindings).join(" ")}) ${unparseLExps(le.body)})`
 
 const unparseDictEntry = (de: DictEntry): string =>
@@ -362,6 +387,4 @@ export const unparseL32 = (exp: Program | Exp): string =>
     isLetExp(exp) ? unparseLetExp(exp) :
     isDefineExp(exp) ? `(define ${exp.var.var} ${unparseL32(exp.val)})` :
     isProgram(exp) ? `(L32 ${unparseLExps(exp.exps)})` :
-    isDictExp(exp) ? unparseDictExp(exp) :
     exp;
-    
