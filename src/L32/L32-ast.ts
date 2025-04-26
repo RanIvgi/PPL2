@@ -115,6 +115,7 @@ export const isLitExp = (x: any): x is LitExp => x.tag === "LitExp";
 
 // TODO: Add DictExp types and predicates
 export type DictEntry = {
+    tag: "DictEntry";
     key: SymbolSExp;
     value: CExp;
 }
@@ -129,7 +130,7 @@ export type DictExp = {
 export type DictRefExp = { tag: "DictRefExp"; dict: CExp; key: CExp };
 
 // DictEntry will represent a key-value pair in the dictionary 
-export const makeDictEntry = (key: SymbolSExp, value: CExp): DictEntry => ({ key, value });
+export const makeDictEntry = (key: SymbolSExp, value: CExp): DictEntry => ({tag: "DictEntry", key, value });
 
 // DictExp will represent a dictionary expression with a list of entries
 // export const makeDictExp = (entries: Binding[]): DictExp =>
