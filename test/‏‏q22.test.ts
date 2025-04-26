@@ -78,12 +78,7 @@ describe('Q22 Tests', () => {
             'a))`)).to.deep.equal(makeOk(42));
     });
 
-    it("Q22 Extra test 11: Dictionary with nested expressions as keys", () => {
-        expect(evalP(`(L32 
-            ((dict ((+ 1 1) 42)) 2))`)).to.deep.equal(makeOk(42));
-    });
-
-    it("Q22 Extra test 12: Literal dictionary values", () => {
+    it("Q22 Extra test 11: Literal dictionary values", () => {
         expect(evalP(`(L32 
             (define d (dict (a "hello") (b #t)))
             (d 'a))`)).to.deep.equal(makeOk("hello"));

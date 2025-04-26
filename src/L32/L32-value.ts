@@ -67,7 +67,6 @@ export const makeDictValue = (entries: DictEntryValue[]): DictValue =>
 //  DictValue predicate
 export const isDictValue = (x: any): x is DictValue => x.tag === "DictValue";
 export const isSymbolSExp = (x: any): x is SymbolSExp => x.tag === "SymbolSExp";
-export const isDictValue = (x: any): x is DictValue => x.tag === "DictValue";
 
 // LitSExp are equivalent to JSON - they can be parsed and read as literal values
 // like SExp except that non functional values (PrimOp and Closures) can be embedded at any level.
