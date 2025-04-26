@@ -1,12 +1,49 @@
-import { makeProgram, Program } from './L3/L3-ast';
+import { Sexp } from 's-expression';
+import { makePrimOp, makeBinding, isLetExp , makeLetExp, makeProcExp, isIfExp , isProcExp, isAppExp, makeIfExp, CExp, AppExp,
+    Exp, makeProgram, Binding, Program, makeAppExp, makeVarRef, isProgram, isDefineExp, makeDefineExp, isCExp } from './L32/L32-ast';
+import { DictEntry,makeLitExp,DictExp, isDictExp } from './L32/L32-ast';
+import { makeCompoundSExp, makeEmptySExp, SExpValue } from './L32/L32-value';
 /*
 Purpose: rewrite all occurrences of DictExp in a program to AppExp.
 Signature: Dict2App (exp)
 Type: Program -> Program
 */
-export const Dict2App  = (exp: Program) : Program =>
-    //@TODO
-    makeProgram([]);
+export const Dict2App = (exp: Program): Program =>
+    isProgram(exp) ? makeProgram(exp.exps.map(rewriteExp)) : exp;
+
+/*
+Purpose: Rewrite an expression, transforming DictExp to AppExp.
+Signature: rewriteExp(exp)
+Type: Exp -> Exp
+*/
+const rewriteExp = (exp: Exp): Exp =>
+    isDefineExp(exp) ? makeDefineExp(exp.var, rewriteCExp(exp.val)) :
+    isCExp(exp) ? rewriteCExp(exp) :
+    exp;
+
+/*
+Purpose: Rewrite a compound expression, transforming DictExp to AppExp.
+Signature: rewriteCExp(cexp)
+Type: CExp -> CExp
+*/
+const rewriteCExp = (cexp: CExp): CExp =>
+    isDictExp(cexp) ? rewriteDictExp(cexp) :
+    // Recursively rewrite sub-expressions
+    isAppExp(cexp) ? makeAppExp(rewriteCExp(cexp.rator), cexp.rands.map(rewriteCExp)) :
+    isIfExp(cexp) ? makeIfExp(rewriteCExp(cexp.test), rewriteCExp(cexp.then), rewriteCExp(cexp.alt)) :
+    isProcExp(cexp) ? makeProcExp(cexp.args, cexp.body.map(rewriteCExp)) :
+    isLetExp(cexp) ? makeLetExp(cexp.bindings.map(b => makeBinding(b.var.var, rewriteCExp(b.val))), cexp.body.map(rewriteCExp)) :
+    cexp;
+
+/*
+Purpose: Transform a DictExp into an AppExp that constructs the dictionary.
+Signature: rewriteDictExp(exp)
+Type: DictExp -> AppExp
+*/
+const rewriteDictExp = (exp: DictExp): AppExp =>
+    makeAppExp(makeVarRef("dict"), exp.entries.map(entry => 
+        makeLitExp(makeCompoundSExp(entry.key, entry.value as SExpValue))));
+
 
 
 /*
