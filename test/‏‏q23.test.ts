@@ -14,6 +14,16 @@ const evalP = (x: string): Result<Value> =>
     bind(parseL3(x), evalL3program);
 
 describe('Q23 Tests', () => {
+    // TODO: delete this test after completing 2.5, it helps to see how ifExp need to be looking
+    it("Q23 spaciel test", () => {
+        expect(evalP(`(L3 ` + q23 + `
+            (define x 1)
+            (get 
+              (if (< x 0)
+                (dict '((a . 1) (b . 2)))
+                (dict '((a . 2) (b . 1))))
+            'a))`)).to.deep.equal(makeOk(2));
+    });
     
    it("Q23 test 1", () => {
         expect(evalP(`(L3 ` + q23 + ` (get (dict '((a . 1) (b . 2))) 'b))`)).to.deep.equal(makeOk(2));

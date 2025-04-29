@@ -4,7 +4,7 @@ import {  evalL32program } from '../src/L32/L32-eval';
 import { Value } from "../src/L32/L32-value";
 import { Result, bind, isFailure, makeFailure, makeOk } from "../src/shared/result";
 import { parseL32, parseL32Exp } from "../src/L32/L32-ast";
-import { makeEmptySExp } from "../src/L3/L3-value";
+import { makeEmptySExp, makeSymbolSExp } from "../src/L3/L3-value";
 
 const evalP = (x: string): Result<Value> =>
     bind(parseL32(x), evalL32program);
