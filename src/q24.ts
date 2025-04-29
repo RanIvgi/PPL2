@@ -4,7 +4,8 @@ import {
     makePrimOp, makeBinding, isLetExp, makeLetExp, makeProcExp, isIfExp, isProcExp, isAppExp, makeIfExp, CExp, AppExp,
     Exp, makeProgram, Binding, Program, makeAppExp, makeVarRef, isProgram, isDefineExp, makeDefineExp, isCExp,
     CompoundExp,
-    isVarRef, isLitExp, isAtomicExp
+    isVarRef, isLitExp, isAtomicExp,
+    isNumExp
 } from './L32/L32-ast';
 import { DictEntry, makeLitExp, DictExp, isDictExp } from './L32/L32-ast';
 import { makeCompoundSExp, makeEmptySExp, SExpValue, CompoundSExp, makeSymbolSExp } from './L32/L32-value';
@@ -69,11 +70,16 @@ const rewriteCExp = (cexp: CExp): CExp =>
  * @returns A compound S-expression (list) representing the dictionary entry.
  */
 const rewriteDictEntry = (entries: DictEntry[]): CompoundSExp =>
+    // TODO: handle all the options for the value of the entry]
     entries.length === 1
         ? isVarRef(entries[0].value) ? makeCompoundSExp(makeCompoundSExp(entries[0].key, makeSymbolSExp(entries[0].value.var)), makeEmptySExp()) :
+        isNumExp(entries[0].value) ? makeCompoundSExp(makeCompoundSExp(entries[0].key, entries[0].value.val), makeEmptySExp()) :
             makeCompoundSExp(makeCompoundSExp(entries[0].key, entries[0].value as SExpValue), makeEmptySExp()) :
         isVarRef(entries[0].value) ? makeCompoundSExp(makeCompoundSExp(entries[0].key, makeSymbolSExp(entries[0].value.var)), rewriteDictEntry(entries.slice(1))) :
+        isNumExp(entries[0].value) ? makeCompoundSExp(makeCompoundSExp(entries[0].key, entries[0].value.val), rewriteDictEntry(entries.slice(1))) :
             makeCompoundSExp(makeCompoundSExp(entries[0].key, entries[0].value as SExpValue), rewriteDictEntry(entries.slice(1)));
+
+        
 
 /*
 Purpose: Transform a DictExp into an AppExp that constructs the dictionary.
