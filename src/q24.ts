@@ -75,6 +75,7 @@ const rewriteDictEntry = (entries: DictEntry[]): CompoundSExp =>
         ? isVarRef(entries[0].value) ? makeCompoundSExp(makeCompoundSExp(entries[0].key, makeSymbolSExp(entries[0].value.var)), makeEmptySExp()) :
         isNumExp(entries[0].value) ? makeCompoundSExp(makeCompoundSExp(entries[0].key, entries[0].value.val), makeEmptySExp()) :
             makeCompoundSExp(makeCompoundSExp(entries[0].key, entries[0].value as SExpValue), makeEmptySExp()) :
+        // if not the last entry, we need to add the rest of the entries to the compound S-expression
         isVarRef(entries[0].value) ? makeCompoundSExp(makeCompoundSExp(entries[0].key, makeSymbolSExp(entries[0].value.var)), rewriteDictEntry(entries.slice(1))) :
         isNumExp(entries[0].value) ? makeCompoundSExp(makeCompoundSExp(entries[0].key, entries[0].value.val), rewriteDictEntry(entries.slice(1))) :
             makeCompoundSExp(makeCompoundSExp(entries[0].key, entries[0].value as SExpValue), rewriteDictEntry(entries.slice(1)));
@@ -96,4 +97,5 @@ Type: AppExp -> AppExp
 */
 const rewriteDictAppExp = (exp: AppExp): AppExp =>
     isDictExp(exp.rator) ? makeAppExp(makeVarRef("get"), [rewriteDictExp(exp.rator), ...exp.rands.map(exp => rewriteCExp(exp))]) :
+    isIfExp(exp.rator) ? makeAppExp(makeVarRef("get"), [rewriteCExp(exp.rator), ...exp.rands.map(exp => rewriteCExp(exp))]) :
         makeAppExp(rewriteCExp(exp.rator), exp.rands.map(rewriteCExp));

@@ -34,7 +34,6 @@ const noDict = (x: string): Result<boolean> =>
 
 describe('Q24 Tests', () => {
 
-
     it("Q24 Ran's test 1", () => {
         expect(noDict(`(L32 ((dict (a 1) (b 2) (c 3)) 'b))`)).to.deep.equal(makeOk(true));
         expect(evalP(`(L32 ((dict (a 1) (b 2) (c 3)) 'b))`)).to.deep.equal(makeOk(2));
@@ -44,7 +43,7 @@ describe('Q24 Tests', () => {
         expect(noDict(`(L32 ((dict (a 1) (b 2)) 'a))`)).to.deep.equal(makeOk(true));
         expect(evalP(`(L32 ((dict (a 1) (b 2)) 'a))`)).to.deep.equal(makeOk(1));
     });
-    
+     
  it("Q23 tests 2", () => {
     expect(noDict(`(L32
                       (define x "a")
@@ -56,7 +55,7 @@ describe('Q24 Tests', () => {
                       (define y "b")
                       ((dict (a x) (b y)) 'b))`)).to.deep.equal(makeOk(makeSymbolSExp('y')))
     });
-    
+
     it("Q24 test 3", () => {
         expect(noDict(`(L32 
             (define x 1)
