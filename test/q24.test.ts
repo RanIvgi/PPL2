@@ -85,7 +85,7 @@ describe('Q24 Tests', () => {
             ((d 'a) 'x))`)).to.deep.equal(makeOk(10));
     });
 
-    it("Q22 Extra test 2: Dictionary with expressions as values", () => {
+    it("Q24 Extra test 2: Dictionary with expressions as values", () => {
         expect(noDict(`(L32 
             (define d (dict (a (+ 1 2)) (b (* 3 4))))
             (d 'a))`)).to.deep.equal(makeOk(true));
@@ -95,11 +95,49 @@ describe('Q24 Tests', () => {
             (d 'a))`)).to.deep.equal(makeOk(3));
     });
 
-    it("Q22 Extra test 3: Invalid dictionary entry (non-string key)", () => {
+    it("Q24 Extra test 3: Invalid dictionary entry (non-string key)", () => {
         expect(noDict(`(L32 
             (dict (1 2) (b 3)))`)).to.deep.equal(makeOk(true));
 
         expect(evalP(`(L32 
             (dict (1 2) (b 3)))`)).to.satisfy(isFailure);
+    });
+
+    it("Q24 Extra test 4: Regular code in L32 (with out DictExp)", () => {
+        expect(noDict(`(L32
+            (define x 1)
+            (if (< x 0)
+                5
+                1))`)).to.deep.equal(makeOk(true));
+
+        expect(evalP(`(L32
+            (define x 1)
+            (if (< x 0)
+                5
+                1))`)).to.deep.equal(makeOk(1));
+    });
+
+    it("Q24 Extra test 5: Regular code in L32 (with out DictExp) 2", () => {
+        expect(noDict(`(L32
+            (define even?
+                (lambda (n)
+                    (if (eq? n 0)
+                        #t
+                        (if (eq? n 1)
+                            #f
+                            (even? (- n 2))))))
+
+                (even? 4))`)).to.deep.equal(makeOk(true));
+
+        expect(evalP(`(L32
+            (define even?
+                (lambda (n)
+                    (if (eq? n 0)
+                        #t
+                        (if (eq? n 1)
+                            #f
+                            (even? (- n 2))))))
+
+                (even? 4))`)).to.deep.equal(makeOk(true));
     });
 });
