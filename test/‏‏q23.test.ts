@@ -2,8 +2,9 @@ import fs from "fs";
 import { expect } from 'chai';
 import {  evalL3program } from '../src/L3/L3-eval';
 import { Value } from "../src/L3/L3-value";
-import { Result, bind, makeOk } from "../src/shared/result";
+import { Result, bind, isFailure, makeOk } from "../src/shared/result";
 import { parseL3 } from "../src/L3/L3-ast";
+import { isError } from "../src/shared/type-predicates";
 
 
 
@@ -14,17 +15,7 @@ const evalP = (x: string): Result<Value> =>
     bind(parseL3(x), evalL3program);
 
 describe('Q23 Tests', () => {
-    // TODO: delete this test after completing 2.5, it helps to see how ifExp need to be looking
-    it("Q23 spaciel test", () => {
-        expect(evalP(`(L3 ` + q23 + `
-            (define x 1)
-            (get 
-              (if (< x 0)
-                (dict '((a . 1) (b . 2)))
-                (dict '((a . 2) (b . 1))))
-            'a))`)).to.deep.equal(makeOk(2));
-    });
-    
+
    it("Q23 test 1", () => {
         expect(evalP(`(L3 ` + q23 + ` (get (dict '((a . 1) (b . 2))) 'b))`)).to.deep.equal(makeOk(2));
     });
@@ -65,4 +56,10 @@ describe('Q23 Tests', () => {
             (bind (get (dict '((a . 1) (b . 2))) 'b) (lambda (x) (* x x))))`
         )).to.deep.equal(makeOk(4));
     });
+
+    // The test dont work becaue i dont know how to check the retunr value of the function
+    // it("Q23 Extra Test : Dictionary with duplicate keys", () => {
+    //     expect(evalP(`(L3 ` + q23 + `
+    //         (get (dict '((a . 1) (a . 5) (b . 2))) 'a))`)).is.satisfy(isError);
+    // });
 });

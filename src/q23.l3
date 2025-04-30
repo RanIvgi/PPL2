@@ -1,43 +1,81 @@
 
+(define make-error
+  (lambda (msg)
+    (list 'error msg)))
+
+(define is-error?
+  (lambda (v)
+    (if (pair? v)
+        (if (eq? (car v) 'error) #t #f)
+        #f)))
+
+(define first-key
+  (lambda (pairs)
+    (car (car pairs))))
+
+(define first-value
+  (lambda (pairs)
+    (cdr (car pairs))))
+
+(define valid-key?
+  (lambda (k)
+    (symbol? k)))
+
+(define key-exists?
+  (lambda (key pairs)
+    (if (eq? pairs '())
+        #f
+        (if (eq? key (first-key pairs))
+            #t
+            (key-exists? key (cdr pairs))))))
+
+(define has-duplicate-keys?
+  (lambda (pairs)
+    (if (eq? pairs '())
+        #f
+        (if (key-exists? (first-key pairs) (cdr pairs))
+            #t
+            (has-duplicate-keys? (cdr pairs))))))
+
 (define dict
-    (lambda (pairs)
-        pairs))
+  (lambda (pairs)
+    (if (not (forall (lambda (p) (valid-key? (car p))) pairs))
+        (make-error "All keys must be symbols")
+        (if (has-duplicate-keys? pairs)
+            (make-error "Dictionary contains duplicate keys")
+            pairs))))
 
 (define get
   (lambda (dict key)
-    (if (eq? dict '())
-        (make-error)
-        (if (and (pair? (car dict)) (eq? key (car (car dict))))
-            (cdr (car dict))
-            (get (cdr dict) key)))))
+    (if (is-error? dict)
+        dict
+        (if (eq? dict '())
+            (make-error "Key not found")
+            (if (and (pair? (car dict)) (eq? key (first-key dict)))
+                (first-value dict)
+                (get (cdr dict) key))))))
 
 (define forall
   (lambda (pred lst)
     (if (eq? lst '())
         #t
-        (and (pred (car lst))
-             (forall pred (cdr lst))))))
+        (if (pred (car lst))
+            (forall pred (cdr lst))
+            #f))))
 
 (define dict?
   (lambda (x)
-    (if (and (pair? x)
-             (forall (lambda (p)
-                       (and (pair? p)
-                            (symbol? (car p))))
-                     x))
-        #t
-        #f)))
-
-
-(define make-error
-  (lambda ()
-    'error))
-
-
-(define is-error?
-  (lambda (v)
-    (eq? v 'error)))
-
+    (if (is-error? x)
+        #f
+        (if (pair? x)
+            (if (forall (lambda (p)
+                          (if (pair? p)
+                              (if (valid-key? (car p)) #t #f)
+                              #f))
+                        x)
+                #t
+                #f)
+            #f))))
 
 (define bind
   (lambda (v f)
