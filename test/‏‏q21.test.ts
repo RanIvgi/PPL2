@@ -77,7 +77,7 @@ describe('Q21 Tests', () => {
     });
 
     it("Q21 Tamari's test 6 - same key dict validation", () => {
-        expect(evalP(`(L31 (dict? (dict '((a . 1) (a . 2)))))`)).is.satisfy(isFailure);
+        expect(evalP(`(L31 (dict? (dict '((a . 1) (a . 2)))))`)).to.deep.equal(makeOk(false));
     });
 
 });

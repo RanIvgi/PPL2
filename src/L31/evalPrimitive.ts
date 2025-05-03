@@ -1,4 +1,4 @@
-import { reduce } from "ramda";
+import { has, reduce } from "ramda";
 import { PrimOp } from "./L31-ast";
 import { isCompoundSExp, isEmptySExp, isSymbolSExp, makeCompoundSExp, makeEmptySExp, CompoundSExp, EmptySExp, Value, SymbolSExp } from "./L31-value";
 import { List, allT, first, isNonEmptyList, rest } from '../shared/list';
@@ -116,7 +116,7 @@ const dictPrim = (v: Value): CompoundSExp =>
  * @returns Result<Value>
  */
 const getInDict = (dict: Value, key: Value): Result<Value> =>
-    isCompoundSExp(dict) && isSymbolSExp(key)
+    isCompoundSExp(dict) && isSymbolSExp(key) && validateDict(dict) && !hasDuplicates(dict)
         ? findInDict(dict, key)
         : makeFailure(
             `Error in get: Expected a dictionary and a symbol key.`
@@ -145,7 +145,7 @@ const findInDict = (dict: CompoundSExp, key: SymbolSExp): Result<Value> =>
  * @returns boolean
  */
 const isDictPrim = (v: Value): boolean =>
-    isCompoundSExp(v) && validateDict(v);
+    isCompoundSExp(v) && validateDict(v) && !hasDuplicates(v);
 
 /**
  * helper function to check if the dictionary is valid.
@@ -157,7 +157,8 @@ const validateDict = (dict: CompoundSExp): boolean =>
         ? isValidPair(dict.val1)
         : isValidPair(dict.val1) &&
         isCompoundSExp(dict.val2) &&
-        validateDict(dict.val2);
+        validateDict(dict.val2)
+    ;
 
 /**
  * Check if the pair is valid (key-value pair).
@@ -166,3 +167,32 @@ const validateDict = (dict: CompoundSExp): boolean =>
  * */
 const isValidPair = (pair: Value): boolean =>
     isCompoundSExp(pair) && isSymbolSExp(pair.val1);
+
+// Get the keys of the dictionary
+const getKeys = (dict: CompoundSExp): List<SymbolSExp> =>
+    isEmptySExp(dict.val2)
+        ? (isCompoundSExp(dict.val1) && isSymbolSExp(dict.val1.val1)
+            ? [dict.val1.val1]
+            : [])
+        : (isCompoundSExp(dict.val1) && isSymbolSExp(dict.val1.val1)
+            ? [dict.val1.val1].concat(getKeys(dict.val2 as CompoundSExp))
+            : getKeys(dict.val2 as CompoundSExp));
+
+// check if the dict without duplicates keys
+const hasDuplicates = (dict: CompoundSExp): boolean => {
+    const keys = getKeys(dict);
+    const uniqueKeys = new Set(keys.map((key) => key.val));
+    return keys.length !== uniqueKeys.size;
+}
+// for debugging purposes
+const printKeys = (dict: CompoundSExp): string => {
+    if (isEmptySExp(dict)) {
+        return "";
+    } else if (isCompoundSExp(dict)) {
+        const keys = getKeys(dict);
+        return keys.map((key) => key.val).join(", ");
+    } else {
+        return "";
+    }
+}
+

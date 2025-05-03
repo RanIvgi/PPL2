@@ -1,6 +1,6 @@
 import fs from "fs";
 import { expect } from 'chai';
-import {  evalL32program } from '../src/L32/L32-eval';
+import { evalL32program } from '../src/L32/L32-eval';
 import { Value } from "../src/L32/L32-value";
 import { Result, bind, isFailure, makeFailure, makeOk } from "../src/shared/result";
 import { parseL32, parseL32Exp } from "../src/L32/L32-ast";
@@ -14,7 +14,7 @@ describe('Q22 Tests', () => {
     it("Q22 basic tests 1", () => {
         expect(evalP(`(L32 ((dict (a 1) (b 2)) 'a))`)).to.deep.equal(makeOk(1));
     });
-    
+
     it("Q22 tests 2", () => {
         expect(evalP(`(L32
                       (define x "a")
@@ -86,4 +86,23 @@ describe('Q22 Tests', () => {
             (define d (dict (a "hello") (b #t)))
             (d 'b))`)).to.deep.equal(makeOk(true));
     });
+
+    // // Test 15 NOY : Lambda returning a dict
+    // it("Q22 test 15 - dict returned from lambda", () => {
+    //     expect(evalP(`(L32
+    //         ((lambda () (dict (m 7))) 'm))`)).to.deep.equal(makeOk(7));
+    // });
+
+    // Test 16: Dict returned from if expression
+    it("Q22 test 16 NOY - dict returned from if expression", () => {
+        expect(evalP(`(L32 
+            (define flag #t)
+            (
+            (if flag
+                (dict (z 9))
+                (dict (z 0))
+            )
+            'z))`)).to.deep.equal(makeOk(9));
+    });
+
 });
