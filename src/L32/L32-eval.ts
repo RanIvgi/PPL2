@@ -90,19 +90,19 @@ const evalDict = (exp: DictExp, env: Env): Result<Value> => {
                 key: entry.key, // Use key directly as a string
                 value
             }));
-    const isDuplicate = checkForDuplicateKeys(exp.entries as DictEntry[]);
-    return isDuplicate ?
-        makeFailure(`Duplicate keys found in dictionary`)
-        :
-        bind(mapResult(evalEntry, exp.entries), (entries: DictEntryValue[]) =>
+    // const isDuplicate = checkForDuplicateKeys(exp.entries as DictEntry[]);
+    // return isDuplicate ?
+    //     makeFailure(`Duplicate keys found in dictionary`)
+    //     :
+         return bind(mapResult(evalEntry, exp.entries), (entries: DictEntryValue[]) =>
             makeOk(makeDictValue(entries)));
 }
 
-// Check for duplicate keys in the dictionary
-const checkForDuplicateKeys = (entries: DictEntry[]): boolean => {
-    const uniqueKeys = new Set(entries.map(entry => entry.key.val));
-    return entries.length !== uniqueKeys.size;
-}
+// // Check for duplicate keys in the dictionary
+// const checkForDuplicateKeys = (entries: DictEntry[]): boolean => {
+//     const uniqueKeys = new Set(entries.map(entry => entry.key.val));
+//     return entries.length !== uniqueKeys.size;
+// }
 
 export const isTrueValue = (x: Value): boolean =>
     !(x === false);

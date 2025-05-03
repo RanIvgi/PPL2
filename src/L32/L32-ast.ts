@@ -1,6 +1,6 @@
 // ===========================================================
 // AST type models
-import { map, zipWith } from "ramda";
+import { is, map, zipWith } from "ramda";
 import { makeEmptySExp, makeSymbolSExp, SExpValue, makeCompoundSExp, valueToString, Value, SymbolSExp } from './L32-value'
 import { first, second, rest, allT, isEmpty, isNonEmptyList, List, NonEmptyList } from "../shared/list";
 import { isArray, isString, isNumericString, isIdentifier } from "../shared/type-predicates";
@@ -208,13 +208,20 @@ export const parseL32CompoundCExp = (op: Sexp, params: Sexp[]): Result<CExp> =>
 
 // DictLitExp -> (dict (key, value)*) | (dict (key, CExp)*)
 export const parseDictExp = (params: Sexp[]): Result<DictExp> =>
-    isGoodBindings(params)
+     isGoodBindings(params) && !isDuplicatekeys(params) 
         ? bind(
               mapResult(parseL32CExp, map(second, params)),
               (vals: CExp[]) => makeOk(makeDictExp(zipWith((key, value) =>
                  makeDictEntry(makeSymbolSExp(key as string), value), map((param) => first(param) as string, params), vals))
           )
         ) : makeFailure('entries in "dict" expression are not valid');
+    
+// Check if the keys in the dictionary are unique
+export const isDuplicatekeys = (params: Sexp[]): boolean => {
+    const keys = map((param) => param[0] as string , params);
+    const uniqueKeys = new Set(keys);
+    return keys.length !== uniqueKeys.size;
+}
 
 
 // export const parseDictRefExp = (params: Sexp[]): Result<DictRefExp> =>
