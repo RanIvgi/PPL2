@@ -211,7 +211,8 @@ export const parseDictExp = (params: Sexp[]): Result<DictExp> =>
     isGoodBindings(params)
         ? bind(
               mapResult(parseL32CExp, map(second, params)),
-              (vals: CExp[]) => makeOk(makeDictExp(zipWith((key, value) => makeDictEntry(makeSymbolSExp(key as string), value), map((param) => first(param) as string, params), vals))
+              (vals: CExp[]) => makeOk(makeDictExp(zipWith((key, value) =>
+                 makeDictEntry(makeSymbolSExp(key as string), value), map((param) => first(param) as string, params), vals))
           )
         ) : makeFailure('entries in "dict" expression are not valid');
 

@@ -79,5 +79,12 @@ describe('Q21 Tests', () => {
     it("Q21 Tamari's test 6 - same key dict validation", () => {
         expect(evalP(`(L31 (dict? (dict '((a . 1) (a . 2)))))`)).to.deep.equal(makeOk(false));
     });
+    it("Q21 Tamari's test 7 - key as a number", () => {
+        expect(evalP(`(L31 (dict? (dict '((a . 1) (2 . b) (c . 3)))))`)).to.deep.equal(makeOk(false));
+    });
+
+    it("Q21 test 8", () => {
+        expect(evalP(`(L31 (dict? '((1 . 1) (b))))`)).to.deep.equal(makeOk(false));
+    });
 
 });

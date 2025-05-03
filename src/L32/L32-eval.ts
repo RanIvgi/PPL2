@@ -136,6 +136,9 @@ const findInDict = (dict: DictValue, args: Value[]): Result<Value> =>
         ? bind(makeOk(dict.entries.find(e => deepEquals(e.key, args[0]))), (entry) =>
             entry ? makeOk(entry.value) : makeFailure(`Key not found in dictionary: ${format(args[0])}. Dictionary contents: ${printDict(dict)}`))
         : makeFailure(`Expected exactly 1 argument for dict lookup, got ${args.length}. Dictionary contents: ${printDict(dict)}`);
+
+// Prints the contents of a dictionary in a readable format.
+// It converts each entry in the dictionary to a string representation of the form "key: value"
 const printDict = (dict: DictValue): string => {
     const entries = dict.entries.map(entry => `${format(entry.key)}: ${format(entry.value)}`);
     return `{ ${entries.join(", ")} }`;
