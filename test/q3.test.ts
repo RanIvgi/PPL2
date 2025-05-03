@@ -13,6 +13,14 @@ describe('Q3 Tests', () => {
         expect(l2toJSResult(`(= 3 (+ 1 2))`)).to.deep.equal(makeOk(`(3 === (1 + 2))`));
     });
 
+    it('parses additional primitive ops', () => {
+        expect(l2toJSResult(`(and true false)`)).to.deep.equal(makeOk(`(true && false)`));
+        expect(l2toJSResult(`(or true false)`)).to.deep.equal(makeOk(`(true || false)`));
+        expect(l2toJSResult(`(/ 10 2)`)).to.deep.equal(makeOk(`(10 / 2)`));
+        expect(l2toJSResult(`(number? 5)`)).to.deep.equal(makeOk(`(typeof 5 === "number")`));
+        expect(l2toJSResult(`(boolean? true)`)).to.deep.equal(makeOk(`(typeof true === "boolean")`));
+    });
+
     it('parses "if" expressions', () => {
         expect(l2toJSResult(`(if (> x 3) 4 5)`)).to.deep.equal(makeOk(`((x > 3) ? 4 : 5)`));
     });

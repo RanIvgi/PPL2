@@ -45,9 +45,13 @@ describe('Q22 Tests', () => {
             (d 'a))`)).to.deep.equal(makeOk(3));
     });
 
-    it("Q22 Extra test 6: Invalid dictionary entry (non-string key)", () => {
+    it("Q22 Extra test 6a: Invalid dictionary entry (non-string key)", () => {
         expect(evalP(`(L32 
             (dict (1 2) (b 3)))`)).to.satisfy(isFailure);
+    });
+    it("Q22 Extra test 6b: Invalid dictionary entry (non-string key)", () => {
+        expect(evalP(`(L32 
+            (dict (5a 2) (b 3)))`)).to.satisfy(isFailure);
     });
 
     it("Q22 Extra test 7: Dictionary application with invalid key type", () => {
