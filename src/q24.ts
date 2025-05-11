@@ -5,13 +5,19 @@ import {
     Exp, makeProgram, Binding, Program, makeAppExp, makeVarRef, isProgram, isDefineExp, makeDefineExp, isCExp,
     CompoundExp,
     isVarRef, isLitExp, isAtomicExp,
-    isNumExp
+    isNumExp,
+    isBoolExp,
+    unparseL32,
+    parseL32,
+    parseL32Exp,
+    parseSExp
 } from './L32/L32-ast';
 import { DictEntry, makeLitExp, DictExp, isDictExp } from './L32/L32-ast';
 import { makeCompoundSExp, makeEmptySExp, SExpValue, CompoundSExp, makeSymbolSExp } from './L32/L32-value';
 import { parseL3 } from "../src/L3/L3-ast";
 import { isOk, Result } from './shared/result';
 import { bind, is } from 'ramda';
+import { isString } from './shared/type-predicates';
 
 // import the function we build in question 2.3
 const q23: string = fs.readFileSync(__dirname + '/../src/q23.l3', { encoding: 'utf-8' });
@@ -69,18 +75,42 @@ const rewriteCExp = (cexp: CExp): CExp =>
  * @param entries - A dictionary entrys, which is an array of key-value pairs.
  * @returns A compound S-expression (list) representing the dictionary entry.
  */
-const rewriteDictEntry = (entries: DictEntry[]): CompoundSExp =>
-    // TODO: handle all the options for the value of the entry]
-    entries.length === 1
-        ? isVarRef(entries[0].value) ? makeCompoundSExp(makeCompoundSExp(entries[0].key, makeSymbolSExp(entries[0].value.var)), makeEmptySExp()) :
-        isNumExp(entries[0].value) ? makeCompoundSExp(makeCompoundSExp(entries[0].key, entries[0].value.val), makeEmptySExp()) :
-            makeCompoundSExp(makeCompoundSExp(entries[0].key, entries[0].value as SExpValue), makeEmptySExp()) :
-        // if not the last entry, we need to add the rest of the entries to the compound S-expression
-        isVarRef(entries[0].value) ? makeCompoundSExp(makeCompoundSExp(entries[0].key, makeSymbolSExp(entries[0].value.var)), rewriteDictEntry(entries.slice(1))) :
-        isNumExp(entries[0].value) ? makeCompoundSExp(makeCompoundSExp(entries[0].key, entries[0].value.val), rewriteDictEntry(entries.slice(1))) :
-            makeCompoundSExp(makeCompoundSExp(entries[0].key, entries[0].value as SExpValue), rewriteDictEntry(entries.slice(1)));
+const rewriteDictEntry = (entries: DictEntry[]): CompoundSExp => {
+    const key = entries[0].key;
+    const value = entries[0].value;
 
-        
+    const handleValue = (val: CExp): SExpValue => {
+        if (isVarRef(val)) return makeSymbolSExp(val.var);
+        else if (isNumExp(val)) return val.val;
+        else if (isBoolExp(val)) return val.val;
+        else if (isString(val)) return val;
+        else if (isLitExp(val)) return val.val;
+        else {
+            const parsedResult = parseL3('(L3 \'' + unparseL32(val) + ")");
+            if (isOk(parsedResult)) {
+                const firstExp = parsedResult.value.exps[0];
+                if (isLitExp(firstExp)) {
+                    return firstExp.val;
+                } else {
+                    throw new Error(`Parsed expression is not a LitExp: ${JSON.stringify(firstExp)}`);
+                }
+            }
+            throw new Error(`Failed to parse SExp: ${parsedResult.message}`);
+        }
+    };
+
+    if (entries.length === 1) {
+        return makeCompoundSExp(
+            makeCompoundSExp(key, handleValue(value)),
+            makeEmptySExp()
+        );
+    }
+
+    return makeCompoundSExp(
+        makeCompoundSExp(key, handleValue(value)),
+        rewriteDictEntry(entries.slice(1))
+    );
+};
 
 /*
 Purpose: Transform a DictExp into an AppExp that constructs the dictionary.
