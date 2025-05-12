@@ -69,6 +69,28 @@ const rewriteCExp = (cexp: CExp): CExp =>
                     isLetExp(cexp) ? makeLetExp(cexp.bindings.map(b => makeBinding(b.var.var, rewriteCExp(b.val))), cexp.body.map(rewriteCExp)) :
                         cexp;
 
+/**
+ * * Purpose: Transform a CExp value into a SExp value.
+ * @param val - A CExp value, which can be a variable reference, number, boolean, string, or literal expression.
+ * @returns A SExp value representing the transformed CExp value.
+ */
+const handleValue = (val: CExp): SExpValue =>
+    isVarRef(val) ? makeSymbolSExp(val.var) :
+    isNumExp(val) ? val.val :
+    isBoolExp(val) ? val.val :
+    isString(val) ? val :
+    isLitExp(val) ? val.val :
+    (() => {
+        const parsedResult = parseL3('(L3 \'' + unparseL32(val) + ")");
+        if (isOk(parsedResult)) {
+            const firstExp = parsedResult.value.exps[0];
+            if (isLitExp(firstExp)) {
+                return firstExp.val;
+            }
+            throw new Error(`Parsed expression is not a LitExp: ${JSON.stringify(firstExp)}`);
+        }
+        throw new Error(`Failed to parse SExp: ${parsedResult.message}`);
+    })();
 
 /**
  * * Purpose: Transform a dictionary entry into a compound S-expression.
@@ -79,37 +101,9 @@ const rewriteDictEntry = (entries: DictEntry[]): CompoundSExp => {
     const key = entries[0].key;
     const value = entries[0].value;
 
-    const handleValue = (val: CExp): SExpValue => {
-        if (isVarRef(val)) return makeSymbolSExp(val.var);
-        else if (isNumExp(val)) return val.val;
-        else if (isBoolExp(val)) return val.val;
-        else if (isString(val)) return val;
-        else if (isLitExp(val)) return val.val;
-        else {
-            const parsedResult = parseL3('(L3 \'' + unparseL32(val) + ")");
-            if (isOk(parsedResult)) {
-                const firstExp = parsedResult.value.exps[0];
-                if (isLitExp(firstExp)) {
-                    return firstExp.val;
-                } else {
-                    throw new Error(`Parsed expression is not a LitExp: ${JSON.stringify(firstExp)}`);
-                }
-            }
-            throw new Error(`Failed to parse SExp: ${parsedResult.message}`);
-        }
-    };
-
-    if (entries.length === 1) {
-        return makeCompoundSExp(
-            makeCompoundSExp(key, handleValue(value)),
-            makeEmptySExp()
-        );
-    }
-
-    return makeCompoundSExp(
-        makeCompoundSExp(key, handleValue(value)),
-        rewriteDictEntry(entries.slice(1))
-    );
+    return entries.length === 1
+        ? makeCompoundSExp(makeCompoundSExp(key, handleValue(value)), makeEmptySExp())
+        : makeCompoundSExp(makeCompoundSExp(key, handleValue(value)), rewriteDictEntry(entries.slice(1)));
 };
 
 /*
@@ -127,5 +121,5 @@ Type: AppExp -> AppExp
 */
 const rewriteDictAppExp = (exp: AppExp): AppExp =>
     isDictExp(exp.rator) ? makeAppExp(makeVarRef("get"), [rewriteDictExp(exp.rator), ...exp.rands.map(exp => rewriteCExp(exp))]) :
-    isIfExp(exp.rator) ? makeAppExp(makeVarRef("get"), [rewriteCExp(exp.rator), ...exp.rands.map(exp => rewriteCExp(exp))]) :
-        makeAppExp(rewriteCExp(exp.rator), exp.rands.map(rewriteCExp));
+        isIfExp(exp.rator) ? makeAppExp(makeVarRef("get"), [rewriteCExp(exp.rator), ...exp.rands.map(exp => rewriteCExp(exp))]) :
+            makeAppExp(rewriteCExp(exp.rator), exp.rands.map(rewriteCExp));
