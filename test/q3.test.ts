@@ -17,8 +17,8 @@ describe('Q3 Tests', () => {
         expect(l2toJSResult(`(and true false)`)).to.deep.equal(makeOk(`(true && false)`));
         expect(l2toJSResult(`(or true false)`)).to.deep.equal(makeOk(`(true || false)`));
         expect(l2toJSResult(`(/ 10 2)`)).to.deep.equal(makeOk(`(10 / 2)`));
-        expect(l2toJSResult(`(number? 5)`)).to.deep.equal(makeOk(`(typeof 5 === "number")`));
-        expect(l2toJSResult(`(boolean? true)`)).to.deep.equal(makeOk(`(typeof true === "boolean")`));
+        expect(l2toJSResult(`(number? 5)`)).to.deep.equal(makeOk(`(typeof(5) === 'number')`));
+        expect(l2toJSResult(`(boolean? #t)`)).to.deep.equal(makeOk(`(typeof(true) === 'boolean')`));
     });
 
     it('parses "if" expressions', () => {
@@ -37,7 +37,7 @@ describe('Q3 Tests', () => {
     it('parses "lambda" expressions 3', () => {
         expect(l2toJSResult(`(lambda () 5 )`)).to.deep.equal(makeOk(`(() => 5)`));
     });
-    
+
     it("defines constants", () => {
         expect(l2toJSResult(`(define pi 3.14)`)).to.deep.equal(makeOk(`const pi = 3.14`));
         expect(l2toJSResult(`(define e 2.71)`)).to.deep.equal(makeOk(`const e = 2.71`));
@@ -74,6 +74,38 @@ describe('Q3 Tests', () => {
               (if (not b) (f 3) (g 4)) 
               ((lambda (x) (* x x)) 7))
               `), l2ToJS)).to.deep.equal(makeOk(`const b = (3 > 4);\nconst x = 5;\nconst f = ((y) => (x + y));\nconst g = ((y) => (x * y));\n((!b) ? f(3) : g(4));\n((x) => (x * x))(7)`));
+    });
+
+    it('Q3 test 1', () => {
+        expect(l2toJSResult(`+`)).to.deep.equal(makeOk(`+`));
+    });
+
+    it('Q3 test 2', () => {
+        expect(l2toJSResult(`(not x)`)).to.deep.equal(makeOk(`(!x)`));
+    });
+
+    it('Q3 test 3', () => {
+        expect(l2toJSResult(`(not (> 2 1))`)).to.deep.equal(makeOk(`(!(2 > 1))`));
+    });
+
+    it('Q3 test 4', () => {
+        expect(l2toJSResult(`number?`)).to.deep.equal(makeOk(`((x) => typeof(x) === 'number')`));
+    });
+
+    it('Q3 test 5', () => {
+        expect(l2toJSResult(`(number? x)`)).to.deep.equal(makeOk(`((x) => typeof(x) === 'number')(x)`));
+    });
+
+    it('Q3 test 6', () => {
+        expect(l2toJSResult(`(number? (> 2 1))`)).to.deep.equal(makeOk(`(typeof((2 > 1)) === 'number')`));
+    });
+
+    it('Q3 test 7', () => {
+        expect(l2toJSResult(`(number? y)`)).to.deep.equal(makeOk(`((y) => typeof(y) === 'number')(y)`));
+    });
+
+    it('Q3 test 8', () => {
+        expect(l2toJSResult(`(number? 5)`)).to.deep.equal(makeOk(`(typeof(5) === 'number')`));
     });
 
 });

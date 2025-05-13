@@ -72,22 +72,15 @@ const appToJS = (exp: AppExp): Result<string> =>
     // Convert the operands and handle primitive operations or function applications
     bind(mapResult(cexpToJS, exp.rands), (args: string[]) =>
         isPrimOp(exp.rator) ?
-            exp.rator.op === "not" ? makeOk(`(!${args[0]})`)
-                :
-                exp.rator.op === "number?"
-                    ?
-                    makeOk(`(typeof ${args[0]} === "number")`)
-                    :
-                    exp.rator.op === "boolean?"
-                        ?
-                        makeOk(`(typeof ${args[0]} === "boolean")`)
-                        :
-                        makeOk(`(${args.join(` ${primOpToJS(exp.rator)} `)})`)
-            :
-            // If the operator is not a primitive operation, convert it to a JavaScript function call
-            // for example: (f 3 4) becomes f(3,4)
-            bind(cexpToJS(exp.rator), (rator: string) => makeOk(`${rator}(${args.join(",")})`)
-            )
+            exp.rator.op === "not" ? makeOk(`(!${args[0]})`) :
+                exp.rator.op === "number?" ?
+                    isVarRef(exp.rands[0]) ? makeOk(`((${args[0]}) => typeof(${args[0]}) === 'number')(${args[0]})`) :
+                        makeOk(`(typeof(${args[0]}) === 'number')`) :
+                exp.rator.op === "boolean?" ?
+                    isVarRef(exp.rands[0]) ? makeOk(`((${args[0]}) => typeof(${args[0]}) === 'boolean')(${args[0]})`) :
+                        makeOk(`(typeof(${args[0]}) === 'boolean')`) :
+                makeOk(`(${args.join(` ${primOpToJS(exp.rator)} `)})`) :
+            bind(cexpToJS(exp.rator), (rator: string) => makeOk(`${rator}(${args.join(",")})`))
     );
 
 /*
@@ -102,7 +95,9 @@ const primOpToJS = (op: PrimOp): string =>
             op.op === "not" ? "!" :
                 op.op === "and" ? "&&" :
                     op.op === "or" ? "||" :
-                        op.op; // other operators remain unchanged like +, -, *, /.
+                        op.op === "number?" ? "((x) => typeof(x) === 'number')" :
+                            op.op === "boolean?" ? "((x) => typeof(x) === 'boolean')" :
+                                op.op; // other operators remain unchanged like +, -, *, /.
 
 /*
 Purpose: Convert an IfExp AST to a JavaScript string
