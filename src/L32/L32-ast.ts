@@ -192,19 +192,6 @@ export const parseL32CompoundExp = (op: Sexp, params: Sexp[]): Result<Exp> =>
 export const parseL32CompoundCExp = (op: Sexp, params: Sexp[]): Result<CExp> =>
     isString(op) && isSpecialForm(op) ? parseL32SpecialForm(op, params) :
         parseAppExp(op, params);
-// DictExp -> DictLitExp | DictExp, this function is used to parse the dictionary literal expression 
-// export const parseDictKey = (key: Sexp): Result<string> =>
-//     isString(key)
-//         ? makeOk(key)
-//         : makeFailure(`Dictionary keys must be strings: ${format(key)}`);
-
-// DictEntry -> (key, value) | (key, CExp)
-// export const parseDictEntry = (keySexp: Sexp, valueSexp: Sexp): Result<DictEntry> =>
-//     bind(parseSExp(keySexp), (key: SExpValue) =>
-//         isSymbolSExp(key)
-//             ? bind(parseL32CExp(valueSexp), (value: CExp) =>
-//                 makeOk(makeDictEntry(key, value))
-//             ) : makeFailure(`Dictionary keys must be symbols: ${format(keySexp)}`));
 
 // DictLitExp -> (dict (key, value)*) | (dict (key, CExp)*)
 export const parseDictExp = (params: Sexp[]): Result<DictExp> =>
@@ -222,14 +209,6 @@ export const isDuplicatekeys = (params: Sexp[]): boolean => {
     const uniqueKeys = new Set(keys);
     return keys.length !== uniqueKeys.size;
 }
-
-
-// export const parseDictRefExp = (params: Sexp[]): Result<DictRefExp> =>
-//     params.length === 2
-//         ? bind(parseL32CExp(params[0]), (dict: CExp) =>
-//             bind(parseL32CExp(params[1]), (key: CExp) =>
-//                 makeOk(makeDictRefExp(dict, key))))
-//         : makeFailure(`Invalid expression: ${format(params)}`);
 
 // DictExp -> (dict? <CExp>) | (get <CExp> <CExp>) | (dict <CExp> <CExp>) | (dict? <CExp>) | (get <CExp> <CExp>) | (dict <CExp> <CExp>) 
 export const parseL32SpecialForm = (op: Sexp, params: Sexp[]): Result<CExp> =>

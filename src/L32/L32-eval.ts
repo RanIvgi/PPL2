@@ -42,31 +42,6 @@ const L32applicativeEval = (exp: CExp, env: Env): Result<Value> =>
                                                 // isDictLitExp(exp) ? evalDictLit(exp, env) :
                                                 exp;
 
-/**
- * Evaluates a dictionary literal expression(DictLitExp) in the given environment.
- * 
- * @param exp - The dictionary literal expression to evaluate.
- * @param env - The environment in which to evaluate the expression.
- * @returns A `Result` containing the evaluated dictionary value if successful, 
- *          or an error if the evaluation fails.
- * 
- * The function processes each dictionary entry by:
- * 1. Evaluating the key as a literal expression.
- * 2. Evaluating the value expression.
- * 3. Combining the evaluated key and value into a `DictEntryValue`.
- * 
- * Finally, it aggregates all evaluated entries into a dictionary value.
- */
-// const evalDictLit = (exp: DictLitExp, env: Env): Result<Value> => {
-//     const evalEntry = (entry: DictEntry): Result<DictEntryValue> =>
-//         bind(L32applicativeEval(makeLitExp(entry.key), env), (key: Value) =>
-//         bind(L32applicativeEval(entry.value, env), (value: Value) =>
-//         makeOk({key, value})));
-
-//     return bind(mapResult(evalEntry, exp.entries), (entries: DictEntryValue[]) =>
-//         makeOk(makeDictValue(entries)));
-// }
-
 
 /**
  * Evaluates a dictionary expression (`DictExp`) in the given environment (`Env`).
@@ -84,6 +59,7 @@ const L32applicativeEval = (exp: CExp, env: Env): Result<Value> =>
  * Finally, it combines all evaluated bindings into a `DictValue` object.
  */
 const evalDict = (exp: DictExp, env: Env): Result<Value> => {
+    // evalEntry takes a DictEntry and evaluates its value using L32applicativeEval.
     const evalEntry = (entry: DictEntry): Result<DictEntryValue> =>
         bind(L32applicativeEval(entry.value, env), (value: Value) =>
             makeOk({
@@ -94,15 +70,11 @@ const evalDict = (exp: DictExp, env: Env): Result<Value> => {
     // return isDuplicate ?
     //     makeFailure(`Duplicate keys found in dictionary`)
     //     :
+
+    // this bind is used to evaluate each entry in the dictionary expression using the evalEntry function above.
          return bind(mapResult(evalEntry, exp.entries), (entries: DictEntryValue[]) =>
             makeOk(makeDictValue(entries)));
 }
-
-// // Check for duplicate keys in the dictionary
-// const checkForDuplicateKeys = (entries: DictEntry[]): boolean => {
-//     const uniqueKeys = new Set(entries.map(entry => entry.key.val));
-//     return entries.length !== uniqueKeys.size;
-// }
 
 export const isTrueValue = (x: Value): boolean =>
     !(x === false);
@@ -134,7 +106,8 @@ const L32applyProcedure = (proc: Value, args: Value[], env: Env): Result<Value> 
 const findInDict = (dict: DictValue, args: Value[]): Result<Value> =>
     args.length === 1
         ? bind(makeOk(dict.entries.find(e => deepEquals(e.key, args[0]))), (entry) =>
-            entry ? makeOk(entry.value) : makeFailure(`Key not found in dictionary: ${format(args[0])}. Dictionary contents: ${printDict(dict)}`))
+            entry ? makeOk(entry.value) 
+        : makeFailure(`Key not found in dictionary: ${format(args[0])}. Dictionary contents: ${printDict(dict)}`))
         : makeFailure(`Expected exactly 1 argument for dict lookup, got ${args.length}. Dictionary contents: ${printDict(dict)}`);
 
 // Prints the contents of a dictionary in a readable format.
