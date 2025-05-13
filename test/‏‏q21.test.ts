@@ -1,5 +1,5 @@
 import { expect } from 'chai';
-import { evalL31program } from '../src/L31/L31-eval';
+import { evalL31program, evalParse } from '../src/L31/L31-eval';
 import { Value } from "../src/L31/L31-value";
 import { Result, bind, isFailure, makeOk } from "../src/shared/result";
 import { parseL31 } from "../src/L31/L31-ast";
@@ -10,6 +10,11 @@ const evalP = (x: string): Result<Value> =>
 
 describe('Q21 Tests', () => {
 
+    it("Q21 Noy's Test", () => {
+        expect(evalP(`(L31 (get (dict '((a  1) (b . 2))) 'a))`)).to.deep.equal(evalParse("'(1)"));
+    });
+
+    
     it("Q21 test 1", () => {
         expect(evalP(`(L31 (get (dict '((a . 1) (b . 2))) 'a))`)).to.deep.equal(makeOk(1));
     });

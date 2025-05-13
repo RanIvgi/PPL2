@@ -1,6 +1,6 @@
 import fs from "fs";
 import { expect } from 'chai';
-import {  evalL3program } from '../src/L3/L3-eval';
+import { evalL3program, evalParse } from '../src/L3/L3-eval';
 import { Value } from "../src/L3/L3-value";
 import { Result, bind, isFailure, makeOk } from "../src/shared/result";
 import { parseL3 } from "../src/L3/L3-ast";
@@ -16,7 +16,7 @@ const evalP = (x: string): Result<Value> =>
 
 describe('Q23 Tests', () => {
 
-   it("Q23 test 1", () => {
+    it("Q23 test 1", () => {
         expect(evalP(`(L3 ` + q23 + ` (get (dict '((a . 1) (b . 2))) 'b))`)).to.deep.equal(makeOk(2));
     });
 
@@ -39,7 +39,7 @@ describe('Q23 Tests', () => {
                       (define d1 (dict '((a . 1) (b . 3))))
                       (define d2 (dict '((a . 1) (b . 2))))
                       (eq? d1 d2))`)).to.deep.equal(makeOk(false));
-    }); 
+    });
 
     it("Q23 test 6", () => {
         expect(evalP(`(L3 ` + q23 + ` 
@@ -57,9 +57,7 @@ describe('Q23 Tests', () => {
         )).to.deep.equal(makeOk(4));
     });
 
-    // The test dont work becaue i dont know how to check the retunr value of the function
-    // it("Q23 Extra Test : Dictionary with duplicate keys", () => {
-    //     expect(evalP(`(L3 ` + q23 + `
-    //         (get (dict '((a . 1) (a . 5) (b . 2))) 'a))`)).is.satisfy(isError);
-    // });
+    it("Q23 Noy's Test", () => {
+        expect(evalP(`(L3 ` + q23 + ` (get (dict '((a  1) (b  2))) 'a))`)).to.deep.equal(evalParse("'(1)"));
+    });
 });
