@@ -66,10 +66,6 @@ const evalDict = (exp: DictExp, env: Env): Result<Value> => {
                 key: entry.key, // Use key directly as a string
                 value
             }));
-    // const isDuplicate = checkForDuplicateKeys(exp.entries as DictEntry[]);
-    // return isDuplicate ?
-    //     makeFailure(`Duplicate keys found in dictionary`)
-    //     :
 
     // this bind is used to evaluate each entry in the dictionary expression using the evalEntry function above.
          return bind(mapResult(evalEntry, exp.entries), (entries: DictEntryValue[]) =>
