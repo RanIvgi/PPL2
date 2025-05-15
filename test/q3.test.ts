@@ -17,8 +17,8 @@ describe('Q3 Tests', () => {
         expect(l2toJSResult(`(and true false)`)).to.deep.equal(makeOk(`(true && false)`));
         expect(l2toJSResult(`(or true false)`)).to.deep.equal(makeOk(`(true || false)`));
         expect(l2toJSResult(`(/ 10 2)`)).to.deep.equal(makeOk(`(10 / 2)`));
-        expect(l2toJSResult(`(number? 5)`)).to.deep.equal(makeOk(`(typeof(5) === 'number')`));
-        expect(l2toJSResult(`(boolean? #t)`)).to.deep.equal(makeOk(`(typeof(true) === 'boolean')`));
+        expect(l2toJSResult(`(number? 5)`)).to.deep.equal(makeOk(`((x) => typeof(x) === 'number')(5)`));
+        expect(l2toJSResult(`(boolean? #t)`)).to.deep.equal(makeOk(`((x) => typeof(x) === 'boolean')(true)`));
     });
 
     it('parses "if" expressions', () => {
@@ -97,15 +97,15 @@ describe('Q3 Tests', () => {
     });
 
     it('Q3 test 6', () => {
-        expect(l2toJSResult(`(number? (> 2 1))`)).to.deep.equal(makeOk(`(typeof((2 > 1)) === 'number')`));
+        expect(l2toJSResult(`(number? (> 2 1))`)).to.deep.equal(makeOk(`((x) => typeof(x) === 'number')((2 > 1))`));
     });
 
     it('Q3 test 7', () => {
-        expect(l2toJSResult(`(number? y)`)).to.deep.equal(makeOk(`((y) => typeof(y) === 'number')(y)`));
+        expect(l2toJSResult(`(number? y)`)).to.deep.equal(makeOk(`((x) => typeof(x) === 'number')(y)`));
     });
 
     it('Q3 test 8', () => {
-        expect(l2toJSResult(`(number? 5)`)).to.deep.equal(makeOk(`(typeof(5) === 'number')`));
+        expect(l2toJSResult(`(number? 5)`)).to.deep.equal(makeOk(`((x) => typeof(x) === 'number')(5)`));
     });
 
 });

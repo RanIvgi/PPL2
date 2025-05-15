@@ -73,13 +73,9 @@ const appToJS = (exp: AppExp): Result<string> =>
     bind(mapResult(cexpToJS, exp.rands), (args: string[]) =>
         isPrimOp(exp.rator) ?
             exp.rator.op === "not" ? makeOk(`(!${args[0]})`) :
-                exp.rator.op === "number?" ?
-                    isVarRef(exp.rands[0]) ? makeOk(`((${args[0]}) => typeof(${args[0]}) === 'number')(${args[0]})`) :
-                        makeOk(`(typeof(${args[0]}) === 'number')`) :
-                exp.rator.op === "boolean?" ?
-                    isVarRef(exp.rands[0]) ? makeOk(`((${args[0]}) => typeof(${args[0]}) === 'boolean')(${args[0]})`) :
-                        makeOk(`(typeof(${args[0]}) === 'boolean')`) :
-                makeOk(`(${args.join(` ${primOpToJS(exp.rator)} `)})`) :
+                exp.rator.op === "number?" ? makeOk(`((x) => typeof(x) === 'number')(${args[0]})`) :
+                    exp.rator.op === "boolean?" ? makeOk(`((x) => typeof(x) === 'boolean')(${args[0]})`) :
+                        makeOk(`(${args.join(` ${primOpToJS(exp.rator)} `)})`) :
             bind(cexpToJS(exp.rator), (rator: string) => makeOk(`${rator}(${args.join(",")})`))
     );
 
